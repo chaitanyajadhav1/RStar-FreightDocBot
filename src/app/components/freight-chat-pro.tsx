@@ -2060,7 +2060,8 @@ export default function FreightChatPro() {
           Authorization: `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
-          certificateId: documents.currentFumigationCertificate.fumigationCertificateId,
+certificateId: documents.currentFumigationCertificate.fumigationCertificateId || 
+              (documents.currentFumigationCertificate as any).certificateId,
           userId: effectiveUserId, // Use validated effective userId
           updateData: updateData,
           updateReason: adminMode ? 'Admin edited data' : 'User edited data in review step'
