@@ -305,7 +305,7 @@ export default function FreightChatPro() {
               exportDeclaration: data.exportDeclaration || null,
               airwayBill: data.airwayBill || null
             },
-            { showToast: isAdminViewingOtherUser }
+            { showToast: !!isAdminViewingOtherUser }
           )
         }
         
@@ -332,7 +332,7 @@ export default function FreightChatPro() {
 
   // Validate all documents with commercial invoice (for admin viewing member documents)
   const validateAllDocumentsWithCommercialInvoice = async (
-    commercialInvoiceNumber: string,
+    commercialInvoiceNumber?: string,
     documentSnapshot?: {
       scomet?: typeof documents.currentSCOMET
       packingList?: typeof documents.currentPackingList
@@ -629,10 +629,17 @@ export default function FreightChatPro() {
 
   // Server-side validation function
   const validateWithCommercialInvoice = async (
-    commercialInvoiceNumber: string,
+    commercialInvoiceNumber: string | undefined,
     documentData: any,
     documentType: string
   ): Promise<any> => {
+    // If no commercial invoice number provided, skip validation early.
+    if (!commercialInvoiceNumber) {
+      // This can happen when invoice number extraction failed; caller expects null on missing number.
+      console.warn('Commercial invoice number missing; skipping cross-verification')
+      return null
+    }
+
     if (!auth.token || !auth.user) {
       snackbar.showSnackbar("Please login first", "warning")
       return null
@@ -722,6 +729,23 @@ export default function FreightChatPro() {
         documentType === 'exportdeclaration' ? '/invoice/delete/delete-export-declaration' :
         '/invoice/delete/delete-airway-bill'
 
+      // Determine id key and value safely by narrowing via runtime checks and casting to any
+      const idKey =
+        documentType === 'invoice' ? 'invoiceId' :
+        documentType === 'scomet' ? 'scometId' :
+        documentType === 'packinglist' ? 'packingListId' :
+        documentType === 'fumigation' ? 'certificateId' :
+        documentType === 'exportdeclaration' ? 'declarationId' :
+        'airwayBillId'
+
+      const idValue =
+        documentType === 'invoice' ? (currentDocument as any).invoiceId :
+        documentType === 'scomet' ? (currentDocument as any).declarationId :
+        documentType === 'packinglist' ? (currentDocument as any).packingListId :
+        documentType === 'fumigation' ? (currentDocument as any).fumigationCertificateId :
+        documentType === 'exportdeclaration' ? (currentDocument as any).declarationId :
+        (currentDocument as any).airway_bill_id
+
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'DELETE',
         headers: {
@@ -729,17 +753,7 @@ export default function FreightChatPro() {
           Authorization: `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
-          [documentType === 'invoice' ? 'invoiceId' : 
-           documentType === 'scomet' ? 'scometId' :
-           documentType === 'packinglist' ? 'packingListId' :
-           documentType === 'fumigation' ? 'certificateId' : 
-           documentType === 'exportdeclaration' ? 'declarationId' : 'airwayBillId']: 
-            documentType === 'invoice' ? currentDocument.invoiceId :
-            documentType === 'scomet' ? currentDocument.declarationId :
-            documentType === 'packinglist' ? currentDocument.packingListId :
-            documentType === 'fumigation' ? currentDocument.fumigationCertificateId :
-            documentType === 'exportdeclaration' ? currentDocument.declarationId :
-            currentDocument.airway_bill_id,
+          [idKey]: idValue,
           userId: getEffectiveUserId(),
         })
       })
@@ -2378,7 +2392,7 @@ export default function FreightChatPro() {
             title="Commercial Invoice"
             description="Upload your commercial invoice PDF for AI-powered data extraction and validation"
             uploading={documents.invoiceUploading}
-            inputRef={documents.invoiceInputRef}
+            inputRef={documents.invoiceInputRef as unknown as React.RefObject<HTMLInputElement>}
             onUpload={createUploadHandler('invoice')}
             onDelete={() => handleDeleteDocument('invoice')}
             icon={<Upload className="w-6 h-6" />}
@@ -2423,7 +2437,7 @@ export default function FreightChatPro() {
             title="SCOMET Declaration"
             description="Upload your SCOMET declaration for compliance verification"
             uploading={documents.scometUploading}
-            inputRef={documents.scometInputRef}
+            inputRef={documents.scometInputRef as unknown as React.RefObject<HTMLInputElement>}
             onUpload={createUploadHandler('scomet')}
             onDelete={() => handleDeleteDocument('scomet')}
             icon={<Upload className="w-6 h-6" />}
@@ -2465,7 +2479,7 @@ export default function FreightChatPro() {
             title="Packing List"
             description="Upload your packing list for cargo details verification"
             uploading={documents.packingListUploading}
-            inputRef={documents.packingListInputRef}
+            inputRef={documents.packingListInputRef as unknown as React.RefObject<HTMLInputElement>}
             onUpload={createUploadHandler('packinglist')}
             onDelete={() => handleDeleteDocument('packinglist')}
             icon={<Upload className="w-6 h-6" />}
@@ -2495,9 +2509,9 @@ export default function FreightChatPro() {
             onSetEditMode={documents.setEditPackingListMode}
             onUpdatePackingList={handleUpdatePackingList}
             onUpdateField={handleUpdatePackingListField}
-            onUpdateBox={handleUpdatePackingListBox}
-            onRemoveBox={handleRemovePackingListBox}
-            onAddBox={handleAddPackingListBox}
+            onUpdatePackingListBox={handleUpdatePackingListBox}
+            onRemovePackingListBox={handleRemovePackingListBox}
+            onAddPackingListBox={handleAddPackingListBox}
             onNextStep={handleNextStep}
             canEdit={canEdit}
             onDeleteDocument={() => handleDeleteDocument('packinglist')}
@@ -2510,7 +2524,7 @@ export default function FreightChatPro() {
             title="Fumigation Certificate"
             description="Upload your fumigation certificate for compliance verification"
             uploading={documents.fumigationUploading}
-            inputRef={documents.fumigationInputRef}
+            inputRef={documents.fumigationInputRef as unknown as React.RefObject<HTMLInputElement>}
             onUpload={createUploadHandler('fumigation')}
             onDelete={() => handleDeleteDocument('fumigation')}
             icon={<Upload className="w-6 h-6" />}
@@ -2552,7 +2566,7 @@ export default function FreightChatPro() {
             title="Export Value Declaration"
             description="Upload your export value declaration for customs valuation verification"
             uploading={documents.exportDeclarationUploading}
-            inputRef={documents.exportDeclarationInputRef}
+            inputRef={documents.exportDeclarationInputRef as unknown as React.RefObject<HTMLInputElement>}
             onUpload={createUploadHandler('exportdeclaration')}
             onDelete={() => handleDeleteDocument('exportdeclaration')}
             icon={<Upload className="w-6 h-6" />}
@@ -2594,7 +2608,7 @@ export default function FreightChatPro() {
             title="Air Waybill"
             description="Upload your air waybill for shipment tracking and verification"
             uploading={documents.airwayBillUploading}
-            inputRef={documents.airwayBillInputRef}
+            inputRef={documents.airwayBillInputRef as unknown as React.RefObject<HTMLInputElement>}
             onUpload={createUploadHandler('airwaybill')}
             onDelete={() => handleDeleteDocument('airwaybill')}
             icon={<Upload className="w-6 h-6" />}
@@ -2837,7 +2851,7 @@ export default function FreightChatPro() {
       {!auth.user ? (
         <AuthDialog
           isLogin={auth.isLogin}
-          authData={auth.authData}
+          authData={auth.authData as any}
           loading={auth.loading}
           onAuthDataChange={auth.handleAuthDataChange}
           onSetCreateNewOrganization={(value) => auth.setAuthData(prev => ({ ...prev, createNewOrganization: value }))}
