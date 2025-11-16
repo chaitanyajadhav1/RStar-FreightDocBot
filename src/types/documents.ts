@@ -218,6 +218,8 @@ export interface PackingListData {
 }
 
 export interface FumigationCertificateData {
+  
+  fumigationCertificateId: string
   certificateId: string
   filename: string
   fileUrl?: string
@@ -264,6 +266,7 @@ export interface FumigationCertificateData {
 
 // src/types/documents.ts - Add this interface to your existing file
 export interface AirwayBillData {
+  id: string
   // Meta
   airway_bill_id: string
   user_id: string
