@@ -36,9 +36,16 @@ import type {
 } from '../../types/auth'
 
 export default function FreightChatPro() {
-  // State
+  // State - Initialize dark mode from localStorage if available (prevents flash)
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('darkMode')
+      if (saved !== null) return saved === 'true'
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+    }
+    return false
+  })
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
   const [skippedSteps, setSkippedSteps] = useState<Set<number>>(new Set())
@@ -68,7 +75,34 @@ export default function FreightChatPro() {
     if (adminMode && selectedUserId) {
       return selectedUserId // Admin viewing member's dashboard
     }
-    return auth.user?.userId || '' // Regular user or admin viewing their own dashboard
+    // Ensure we always return a valid userId, throw error if not available
+    if (!auth.user?.userId) {
+      throw new Error('User ID is not available. Please log in again.')
+    }
+    return auth.user.userId // Regular user or admin viewing their own dashboard
+  }
+
+  // Helper function to validate userId for admin editing
+  const validateUserIdForUpdate = (): string => {
+    // Get effective userId with validation
+    let effectiveUserId: string
+    try {
+      effectiveUserId = getEffectiveUserId()
+    } catch (error: any) {
+      throw new Error(error.message || 'User ID is not available')
+    }
+
+    // Additional validation: if admin is editing, ensure selectedUserId is set
+    if (adminMode && auth.user?.role === 'admin' && !selectedUserId) {
+      throw new Error('Please select a member to edit their documents')
+    }
+
+    // Validate that userId is not empty or undefined
+    if (!effectiveUserId || effectiveUserId.trim() === '' || effectiveUserId === 'undefined' || effectiveUserId === 'null') {
+      throw new Error('User ID is not available')
+    }
+
+    return effectiveUserId
   }
 
   // Determine if user can edit - only admins can edit
@@ -85,18 +119,17 @@ export default function FreightChatPro() {
       ? (rawMemberMessage as AdminMessage)
       : null
 
-  // Effects
+  // Effects - Apply dark mode class and persist to localStorage
   useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      // Apply dark mode class to document
+      if (darkMode) {
+        document.documentElement.classList.add('dark')
+        localStorage.setItem('darkMode', 'true')
+      } else {
+        document.documentElement.classList.remove('dark')
+        localStorage.setItem('darkMode', 'false')
+      }
     }
   }, [darkMode])
 
@@ -371,6 +404,7 @@ export default function FreightChatPro() {
           {
             invoiceNumber: snapshotFumigation.invoiceNumber,
             invoiceDate: snapshotFumigation.invoiceDate,
+            shippingMark: snapshotFumigation.shippingMark,
             exporterName: snapshotFumigation.exporterName,
             consigneeName: snapshotFumigation.consigneeName,
           },
@@ -398,8 +432,11 @@ export default function FreightChatPro() {
         const exportDeclarationValidation = await validateWithCommercialInvoice(
           commercialInvoiceNumber,
           {
-            invoiceNumber: snapshotExportDeclaration.invoiceNo,
+            invoiceNo: snapshotExportDeclaration.invoiceNo,
             invoiceDate: snapshotExportDeclaration.invoiceDate,
+            shippingBillNo: snapshotExportDeclaration.shippingBillNo,
+            shippingBillDate: snapshotExportDeclaration.shippingBillDate,
+            paymentTerms: snapshotExportDeclaration.paymentTerms,
           },
           'exportdeclaration'
         )
@@ -425,10 +462,15 @@ export default function FreightChatPro() {
         const airwayBillValidation = await validateWithCommercialInvoice(
           commercialInvoiceNumber,
           {
-            invoiceNumber: snapshotAirwayBill.invoice_no,
-            invoiceDate: snapshotAirwayBill.invoice_date,
-            shippersName: snapshotAirwayBill.shippers_name,
-            consigneesName: snapshotAirwayBill.consignees_name,
+            invoice_no: snapshotAirwayBill.invoice_no,
+            invoice_date: snapshotAirwayBill.invoice_date,
+            shippers_name: snapshotAirwayBill.shippers_name,
+            shippers_address: snapshotAirwayBill.shippers_address,
+            consignees_name: snapshotAirwayBill.consignees_name,
+            consignees_address: snapshotAirwayBill.consignees_address,
+            issuing_carriers_name: snapshotAirwayBill.issuing_carriers_name,
+            issuing_carriers_city: snapshotAirwayBill.issuing_carriers_city,
+            hs_code_no: snapshotAirwayBill.hs_code_no,
           },
           'airwaybill'
         )
@@ -800,6 +842,8 @@ export default function FreightChatPro() {
         sessionStorage.setItem("freightchat_token", result.token)
         sessionStorage.setItem("freightchat_user", JSON.stringify(result.user))
         sessionStorage.setItem("freightchat_org", JSON.stringify(result.organization))
+        // Save auth role for next login
+        sessionStorage.setItem("freightchat_authRole", auth.authRole)
 
         auth.setAuthDialogOpen(false)
         
@@ -1260,6 +1304,7 @@ export default function FreightChatPro() {
               {
                 invoiceNumber: processedData.invoiceNumber,
                 invoiceDate: processedData.invoiceDate,
+                shippingMark: processedData.shippingMark,
                 exporterName: processedData.exporterName,
                 consigneeName: processedData.consigneeName,
               },
@@ -1326,8 +1371,11 @@ export default function FreightChatPro() {
             const validationResult = await validateWithCommercialInvoice(
               documents.currentInvoice.invoice_no,
               {
-                invoiceNumber: processedData.invoiceNo,
+                invoiceNo: processedData.invoiceNo,
                 invoiceDate: processedData.invoiceDate,
+                shippingBillNo: processedData.shippingBillNo,
+                shippingBillDate: processedData.shippingBillDate,
+                paymentTerms: processedData.paymentTerms,
               },
               'exportdeclaration'
             )
@@ -1392,10 +1440,15 @@ export default function FreightChatPro() {
             const validationResult = await validateWithCommercialInvoice(
               documents.currentInvoice.invoice_no,
               {
-                invoiceNumber: processedData.invoice_no,
-                invoiceDate: processedData.invoice_date,
-                shippersName: processedData.shippers_name,
-                consigneesName: processedData.consignees_name,
+                invoice_no: processedData.invoice_no,
+                invoice_date: processedData.invoice_date,
+                shippers_name: processedData.shippers_name,
+                shippers_address: processedData.shippers_address,
+                consignees_name: processedData.consignees_name,
+                consignees_address: processedData.consignees_address,
+                issuing_carriers_name: processedData.issuing_carriers_name,
+                issuing_carriers_city: processedData.issuing_carriers_city,
+                hs_code_no: processedData.hs_code_no,
               },
               'airwaybill'
             )
@@ -1462,6 +1515,15 @@ export default function FreightChatPro() {
 
     documents.setInvoiceUpdating(true)
     try {
+      // Validate userId for admin editing
+      let effectiveUserId: string
+      try {
+        effectiveUserId = validateUserIdForUpdate()
+      } catch (error: any) {
+        snackbar.showSnackbar(error.message || 'User ID validation failed', 'error')
+        documents.setInvoiceUpdating(false)
+        return
+      }
       const updateData = {
         invoice_no: documents.currentInvoice.invoice_no,
         invoice_date: documents.currentInvoice.invoice_date,
@@ -1520,7 +1582,7 @@ export default function FreightChatPro() {
         },
         body: JSON.stringify({
         invoiceNo: documents.currentInvoice.invoice_no, // Changed from invoiceId to invoiceNo
-          userId: getEffectiveUserId(), // Use effective userId (member's userId if admin is viewing)
+          userId: effectiveUserId, // Use validated effective userId
           updateData: updateData,
           updateReason: adminMode ? 'Admin edited data' : 'User edited data in review step'
         })
@@ -1635,6 +1697,15 @@ export default function FreightChatPro() {
 
     documents.setSCOMETUpdating(true)
     try {
+      // Validate userId for admin editing
+      let effectiveUserId: string
+      try {
+        effectiveUserId = validateUserIdForUpdate()
+      } catch (error: any) {
+        snackbar.showSnackbar(error.message || 'User ID validation failed', 'error')
+        documents.setSCOMETUpdating(false)
+        return
+      }
       const updateData = {
         document_date: documents.currentSCOMET.documentDate,
         document_type: documents.currentSCOMET.documentType,
@@ -1662,7 +1733,7 @@ export default function FreightChatPro() {
         },
         body: JSON.stringify({
           scometId: documents.currentSCOMET.declarationId,
-          userId: getEffectiveUserId(), // Use effective userId (member's userId if admin is viewing)
+          userId: effectiveUserId, // Use validated effective userId
           updateData: updateData,
           updateReason: adminMode ? 'Admin edited data' : 'User edited data in review step'
         })
@@ -1729,6 +1800,15 @@ export default function FreightChatPro() {
 
     documents.setPackingListUpdating(true)
     try {
+      // Validate userId for admin editing
+      let effectiveUserId: string
+      try {
+        effectiveUserId = validateUserIdForUpdate()
+      } catch (error: any) {
+        snackbar.showSnackbar(error.message || 'User ID validation failed', 'error')
+        documents.setPackingListUpdating(false)
+        return
+      }
       const formatDate = (dateValue: any): string | undefined => {
         if (!dateValue) return undefined;
         try {
@@ -1806,7 +1886,7 @@ export default function FreightChatPro() {
         },
         body: JSON.stringify({
           packingListId: documents.currentPackingList.packingListId,
-          userId: getEffectiveUserId(),
+          userId: effectiveUserId, // Use validated effective userId
           updateData: updateData,
           updateReason: adminMode ? 'Admin edited data' : 'User edited data in review step'
         })
@@ -1915,6 +1995,15 @@ export default function FreightChatPro() {
 
     documents.setFumigationUpdating(true)
     try {
+      // Validate userId for admin editing
+      let effectiveUserId: string
+      try {
+        effectiveUserId = validateUserIdForUpdate()
+      } catch (error: any) {
+        snackbar.showSnackbar(error.message || 'User ID validation failed', 'error')
+        documents.setFumigationUpdating(false)
+        return
+      }
       const updateData = {
         certificate_number: documents.currentFumigationCertificate.certificateNumber,
         certificate_date: documents.currentFumigationCertificate.certificateDate,
@@ -1958,7 +2047,7 @@ export default function FreightChatPro() {
         },
         body: JSON.stringify({
           certificateId: documents.currentFumigationCertificate.fumigationCertificateId,
-          userId: getEffectiveUserId(),
+          userId: effectiveUserId, // Use validated effective userId
           updateData: updateData,
           updateReason: adminMode ? 'Admin edited data' : 'User edited data in review step'
         })
@@ -1981,6 +2070,7 @@ export default function FreightChatPro() {
           {
             invoiceNumber: documents.currentFumigationCertificate.invoiceNumber,
             invoiceDate: documents.currentFumigationCertificate.invoiceDate,
+            shippingMark: documents.currentFumigationCertificate.shippingMark,
             exporterName: documents.currentFumigationCertificate.exporterName,
             consigneeName: documents.currentFumigationCertificate.consigneeName,
           },
@@ -2030,6 +2120,15 @@ export default function FreightChatPro() {
 
     documents.setExportDeclarationUpdating(true)
     try {
+      // Validate userId for admin editing
+      let effectiveUserId: string
+      try {
+        effectiveUserId = validateUserIdForUpdate()
+      } catch (error: any) {
+        snackbar.showSnackbar(error.message || 'User ID validation failed', 'error')
+        documents.setExportDeclarationUpdating(false)
+        return
+      }
       const updateData = {
         document_type: documents.currentExportDeclaration.documentType,
         invoice_no: documents.currentExportDeclaration.invoiceNo,
@@ -2061,7 +2160,7 @@ export default function FreightChatPro() {
         },
         body: JSON.stringify({
           declarationId: documents.currentExportDeclaration.declarationId,
-          userId: getEffectiveUserId(),
+          userId: effectiveUserId, // Use validated effective userId
           updateData: updateData,
           updateReason: adminMode ? 'Admin edited data' : 'User edited data in review step'
         })
@@ -2082,8 +2181,11 @@ export default function FreightChatPro() {
         const validationResult = await validateWithCommercialInvoice(
           documents.currentInvoice.invoice_no,
           {
-            invoiceNumber: documents.currentExportDeclaration.invoiceNo,
+            invoiceNo: documents.currentExportDeclaration.invoiceNo,
             invoiceDate: documents.currentExportDeclaration.invoiceDate,
+            shippingBillNo: documents.currentExportDeclaration.shippingBillNo,
+            shippingBillDate: documents.currentExportDeclaration.shippingBillDate,
+            paymentTerms: documents.currentExportDeclaration.paymentTerms,
           },
           'exportdeclaration'
         )
@@ -2131,6 +2233,34 @@ export default function FreightChatPro() {
 
     documents.setAirwayBillUpdating(true)
     try {
+      // Validate userId for admin editing
+      let effectiveUserId: string
+      try {
+        effectiveUserId = validateUserIdForUpdate()
+        console.log('[Update AirwayBill] Effective userId:', effectiveUserId, {
+          adminMode,
+          selectedUserId,
+          authUserId: auth.user?.userId
+        })
+      } catch (error: any) {
+        console.error('[Update AirwayBill] Error validating userId:', error)
+        snackbar.showSnackbar(error.message || 'User ID validation failed', 'error')
+        documents.setAirwayBillUpdating(false)
+        return
+      }
+
+      // Validate airway bill ID - check multiple possible property names
+      const airwayBillId = documents.currentAirwayBill.airway_bill_id || 
+                           documents.currentAirwayBill.id || 
+                           (documents.currentAirwayBill as any).airwayBillId
+      
+      if (!airwayBillId) {
+        console.error('[Update AirwayBill] Missing airway bill ID. Document:', documents.currentAirwayBill)
+        snackbar.showSnackbar('Airway Bill ID is missing. Please refresh and try again.', 'error')
+        documents.setAirwayBillUpdating(false)
+        return
+      }
+
       const updateData = {
         document_type: documents.currentAirwayBill.document_type,
         airway_bill_no: documents.currentAirwayBill.airway_bill_no,
@@ -2164,8 +2294,8 @@ export default function FreightChatPro() {
           Authorization: `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
-          airwayBillId: documents.currentAirwayBill.airway_bill_id,
-          userId: getEffectiveUserId(),
+          airwayBillId: airwayBillId,
+          userId: effectiveUserId,
           updateData: updateData,
           updateReason: adminMode ? 'Admin edited data' : 'User edited data in review step'
         })
@@ -2186,10 +2316,15 @@ export default function FreightChatPro() {
         const validationResult = await validateWithCommercialInvoice(
           documents.currentInvoice.invoice_no,
           {
-            invoiceNumber: documents.currentAirwayBill.invoice_no,
-            invoiceDate: documents.currentAirwayBill.invoice_date,
-            shippersName: documents.currentAirwayBill.shippers_name,
-            consigneesName: documents.currentAirwayBill.consignees_name,
+            invoice_no: documents.currentAirwayBill.invoice_no,
+            invoice_date: documents.currentAirwayBill.invoice_date,
+            shippers_name: documents.currentAirwayBill.shippers_name,
+            shippers_address: documents.currentAirwayBill.shippers_address,
+            consignees_name: documents.currentAirwayBill.consignees_name,
+            consignees_address: documents.currentAirwayBill.consignees_address,
+            issuing_carriers_name: documents.currentAirwayBill.issuing_carriers_name,
+            issuing_carriers_city: documents.currentAirwayBill.issuing_carriers_city,
+            hs_code_no: documents.currentAirwayBill.hs_code_no,
           },
           'airwaybill'
         )
@@ -2599,7 +2734,7 @@ export default function FreightChatPro() {
 
   // Main render
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-slate-900' : 'bg-gradient-to-br from-slate-50 to-teal-50'}`}>
+    <div className={`min-h-screen w-full ${darkMode ? 'dark bg-slate-900' : 'bg-gradient-to-br from-slate-50 to-teal-50'}`}>
       <Header
         user={auth.user}
         darkMode={darkMode}
@@ -2616,7 +2751,7 @@ export default function FreightChatPro() {
       {/* Fixed Banners - positioned below header */}
       {adminMode && selectedUserId && viewingUser && (
         <div className={`fixed top-14 left-0 right-0 z-30 border-b-2 ${darkMode ? 'border-purple-600 bg-gradient-to-r from-purple-900/95 to-purple-800/95' : 'border-purple-500 bg-gradient-to-r from-purple-50 to-purple-100'} shadow-lg`}>
-          <div className="flex items-center justify-between max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 gap-2 sm:gap-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-700/50' : 'bg-purple-200'}`}>
                 <Shield className={`w-5 h-5 ${darkMode ? 'text-purple-300' : 'text-purple-700'}`} />
@@ -2630,18 +2765,18 @@ export default function FreightChatPro() {
                     Viewing Member Dashboard
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
+                  <span className={`text-xs sm:text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                     Member:
                   </span>
-                  <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  <span className={`text-sm sm:text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'} truncate max-w-[150px] sm:max-w-none`}>
                     {viewingUser.name}
                   </span>
-                  <span className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <span className={`text-xs sm:text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'} hidden sm:inline`}>
                     ({viewingUser.userId})
                   </span>
                   {viewingUser.email && (
-                    <span className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'} hidden md:inline truncate max-w-[200px]`}>
                       • {viewingUser.email}
                     </span>
                   )}
@@ -2650,14 +2785,15 @@ export default function FreightChatPro() {
             </div>
             <button
               onClick={handleBackToAdmin}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all hover:scale-105 flex-shrink-0 ${
                 darkMode
                   ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-lg'
                   : 'bg-purple-600 text-white hover:bg-purple-700 shadow-md'
               }`}
             >
-              <ChevronLeft className="w-4 h-4" />
-              Back to Admin Dashboard
+              <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Back to Admin Dashboard</span>
+              <span className="sm:hidden">Back</span>
             </button>
           </div>
         </div>
@@ -2712,7 +2848,7 @@ export default function FreightChatPro() {
         />
       ) : auth.user?.role === 'admin' && adminMode && !selectedUserId ? (
         // Admin Dashboard - Show user list (only if admin and no user selected)
-        <div className="h-[calc(100vh-56px)] overflow-auto">
+        <div className="h-[calc(100vh-56px)] overflow-y-auto w-full">
           <AdminDashboard
             token={auth.token || ''}
             onSelectUser={handleSelectUser}
@@ -2722,7 +2858,7 @@ export default function FreightChatPro() {
         </div>
       ) : (
         // User Dashboard (regular user or admin viewing a user)
-        <div className="h-[calc(100vh-56px)] flex relative">
+        <div className="h-[calc(100vh-56px)] flex relative w-full overflow-hidden">
           <Sidebar
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
@@ -2732,22 +2868,23 @@ export default function FreightChatPro() {
             onStepClick={handleStepClick}
           />
 
-          <div className="flex-1 min-w-0 h-full">
+          <div className="flex-1 min-w-0 h-full overflow-hidden">
             <div className={`h-full flex flex-col ${getContentPadding()}`}>
-              <div className="flex-1 overflow-hidden px-4">
+              <div className="flex-1 overflow-y-auto px-3 sm:px-4 lg:px-6">
                 {renderStepContent()}
               </div>
 
               {/* Footer Navigation */}
-              <div className={`border-t ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'} p-4`}>
-                <div className="flex justify-between items-center">
+              <div className={`border-t ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'} p-3 sm:p-4`}>
+                <div className="flex justify-between items-center gap-2 sm:gap-4">
                   <button
                     onClick={handlePreviousStep}
                     disabled={currentStep === 0}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-sm"
+                    className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-200 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
                   </button>
                   <button
                     onClick={handleNextStep}
@@ -2760,10 +2897,11 @@ export default function FreightChatPro() {
                       (currentStep === 4 && !documents.currentExportDeclaration && !skippedSteps.has(4)) ||
                       (currentStep === 5 && !documents.currentAirwayBill && !skippedSteps.has(5))
                     }
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-700 to-teal-600 text-white rounded-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-sm"
+                    className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-teal-700 to-teal-600 text-white rounded-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
                   >
-                    {currentStep === PROCESSING_STEPS.length - 1 ? 'Complete' : 'Next Step'}
-                    <ChevronRight className="w-4 h-4" />
+                    <span className="hidden sm:inline">{currentStep === PROCESSING_STEPS.length - 1 ? 'Complete' : 'Next Step'}</span>
+                    <span className="sm:hidden">{currentStep === PROCESSING_STEPS.length - 1 ? 'Done' : 'Next'}</span>
+                    <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>

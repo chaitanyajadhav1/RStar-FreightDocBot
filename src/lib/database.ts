@@ -3499,6 +3499,66 @@ export async function updateAirwayBillStatus(
   return data;
 }
 
+export async function updateAirwayBill(
+  airwayBillId: string,
+  userId: string,
+  updateData: {
+    document_type?: string;
+    airway_bill_no?: string;
+    invoice_no?: string;
+    invoice_date?: string;
+    shippers_name?: string;
+    shippers_address?: string;
+    consignees_name?: string;
+    consignees_address?: string;
+    issuing_carriers_name?: string;
+    issuing_carriers_city?: string;
+    agents_iata_code?: string;
+    airport_of_departure?: string;
+    airport_of_destination?: string;
+    accounting_information?: string;
+    hs_code_no?: string;
+    no_of_pieces?: number;
+    gross_weight?: number;
+    chargeable_weight?: number;
+    nature_of_goods?: string;
+    is_valid?: boolean;
+    completeness?: number;
+    validation_errors?: any;
+    validation_warnings?: any;
+    updated_at?: string;
+  }
+) {
+  console.log('[DB] Updating airway bill:', { airwayBillId, userId });
+
+  // Filter out undefined values to only update provided fields
+  const updatePayload: any = {};
+  Object.keys(updateData).forEach(key => {
+    const value = updateData[key as keyof typeof updateData];
+    if (value !== undefined) {
+      updatePayload[key] = value;
+    }
+  });
+
+  console.log('[DB] Update payload keys:', Object.keys(updatePayload));
+
+  const { data, error } = await supabaseAdmin
+    .from('airway_bills')
+    .update(updatePayload)
+    .eq('airway_bill_id', airwayBillId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[DB] Error updating airway bill:', error);
+    throw error;
+  }
+
+  console.log('[DB] Airway bill updated successfully');
+  return data;
+}
+
 export async function deleteAirwayBill(airwayBillId: string) {
   const { error } = await supabase
     .from('airway_bills')

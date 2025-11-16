@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FreightChat Pro - AI-Powered Shipping & Logistics",
+  title: "RStar - FreightDocBot - AI-Powered Shipping & Logistics",
   description: "Intelligent document processing, real-time tracking, and AI-powered shipping assistance with Redis data storage",
 };
 
@@ -23,7 +23,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const darkMode = localStorage.getItem('darkMode');
+                  if (darkMode === 'true') {
+                    document.documentElement.classList.add('dark');
+                  } else if (darkMode === null) {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) {
+                      document.documentElement.classList.add('dark');
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}

@@ -25,6 +25,7 @@ export const useAuth = () => {
     const savedToken = sessionStorage.getItem("freightchat_token")
     const savedUser = sessionStorage.getItem("freightchat_user")
     const savedOrg = sessionStorage.getItem("freightchat_org")
+    const savedAuthRole = sessionStorage.getItem("freightchat_authRole")
 
     if (savedToken && savedUser) {
       try {
@@ -34,11 +35,16 @@ export const useAuth = () => {
         setUser(userData)
         setOrganization(orgData)
         setAuthDialogOpen(false)
+        // Restore auth role if saved
+        if (savedAuthRole && (savedAuthRole === 'admin' || savedAuthRole === 'user')) {
+          setAuthRole(savedAuthRole as 'admin' | 'user')
+        }
       } catch (error) {
         console.error("Error loading saved session:", error)
         sessionStorage.removeItem("freightchat_token")
         sessionStorage.removeItem("freightchat_user")
         sessionStorage.removeItem("freightchat_org")
+        sessionStorage.removeItem("freightchat_authRole")
       }
     }
   }, [])
@@ -55,13 +61,20 @@ export const useAuth = () => {
     setOrganization(null)
     setToken(null)
     setAuthDialogOpen(true)
+    // Reset auth role to default on logout
+    setAuthRole('user')
     sessionStorage.removeItem("freightchat_token")
     sessionStorage.removeItem("freightchat_user")
     sessionStorage.removeItem("freightchat_org")
+    sessionStorage.removeItem("freightchat_authRole")
   }
 
   const handleSetRole = (role: 'admin' | 'user') => {
     setAuthRole(role)
+    // Persist auth role to sessionStorage
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem("freightchat_authRole", role)
+    }
     // When switching to admin mode, automatically set createNewOrganization to true
     if (role === 'admin') {
       setAuthData(prev => ({

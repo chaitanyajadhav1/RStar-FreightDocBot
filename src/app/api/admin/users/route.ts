@@ -11,7 +11,8 @@ import {
   getUserSCOMETDeclarations,
   getUserPackingLists,
   getUserFumigationCertificates,
-  getUserExportDeclarations
+  getUserExportDeclarations,
+  getUserAirwayBills
 } from '@/lib/database';
 
 // GET - Fetch all users in organization with document counts (admin only)
@@ -57,14 +58,16 @@ export async function GET(request: NextRequest) {
             scomet,
             packingLists,
             fumigation,
-            exportDeclarations
+            exportDeclarations,
+            airwayBills
           ] = await Promise.all([
             getUserDocuments(user.user_id),
             getUserInvoices(user.user_id),
             getUserSCOMETDeclarations(user.user_id),
             getUserPackingLists(user.user_id),
             getUserFumigationCertificates(user.user_id),
-            getUserExportDeclarations(user.user_id)
+            getUserExportDeclarations(user.user_id),
+            getUserAirwayBills(user.user_id)
           ]);
 
           const totalDocuments = 
@@ -72,7 +75,8 @@ export async function GET(request: NextRequest) {
             scomet.length + 
             packingLists.length + 
             fumigation.length + 
-            exportDeclarations.length;
+            exportDeclarations.length +
+            airwayBills.length;
 
           return {
             userId: user.user_id,
@@ -89,6 +93,7 @@ export async function GET(request: NextRequest) {
               packingLists: packingLists.length,
               fumigation: fumigation.length,
               exportDeclarations: exportDeclarations.length,
+              airwayBills: airwayBills.length,
               documents: documents.length
             }
           };
@@ -109,6 +114,7 @@ export async function GET(request: NextRequest) {
               packingLists: 0,
               fumigation: 0,
               exportDeclarations: 0,
+              airwayBills: 0,
               documents: 0
             }
           };

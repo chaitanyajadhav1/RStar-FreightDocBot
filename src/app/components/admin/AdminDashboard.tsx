@@ -19,6 +19,7 @@ interface UserWithCounts {
     packingLists: number
     fumigation: number
     exportDeclarations: number
+    airwayBills: number
     documents: number
   }
 }
@@ -190,8 +191,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const activeUsers = users.filter((user: UserWithCounts) => user.isActive).length
 
   return (
-    <div className={`h-full ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
-      <div className="p-6">
+    <div className={`h-full w-full ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <div className="p-4 sm:p-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
@@ -208,7 +209,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <div className={`p-4 rounded-lg border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
             <div className="flex items-center justify-between">
               <div>
@@ -291,7 +292,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ) : (
           <div className={`rounded-lg border overflow-hidden ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
             <div className={`overflow-x-auto ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-              <table className="w-full">
+              <table className="w-full min-w-[640px]">
                 <thead>
                   <tr className={`border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                     <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
@@ -331,22 +332,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           : ''
                       }`}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 sm:px-6 py-4">
                         <div className="flex items-center">
                           <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
                             darkMode ? 'bg-slate-700' : 'bg-slate-200'
                           }`}>
                             <User className={`w-5 h-5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`} />
                           </div>
-                          <div className="ml-4">
-                            <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                          <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                            <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-slate-900'} truncate`}>
                               {user.name}
                             </div>
-                            <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <div className={`text-xs sm:text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'} truncate`}>
                               {user.userId}
                             </div>
                             {user.email && (
-                              <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                              <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'} truncate`}>
                                 {user.email}
                               </div>
                             )}
@@ -364,15 +365,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 sm:px-6 py-4">
                         <div className="text-sm">
                           <div className={`font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                             {user.documentCounts.total} total
                           </div>
-                          <div className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            {user.documentCounts.invoices} invoices, {user.documentCounts.scomet} SCOMET,{' '}
-                            {user.documentCounts.packingLists} packing lists, {user.documentCounts.fumigation} fumigation,{' '}
-                            {user.documentCounts.exportDeclarations} export declarations
+                          <div className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'} break-words`}>
+                            <span className="inline-block mr-2">{user.documentCounts.invoices} invoices</span>
+                            <span className="inline-block mr-2">{user.documentCounts.scomet} SCOMET</span>
+                            <span className="inline-block mr-2">{user.documentCounts.packingLists} packing lists</span>
+                            <span className="inline-block mr-2">{user.documentCounts.fumigation} fumigation</span>
+                            <span className="inline-block mr-2">{user.documentCounts.exportDeclarations} export declarations</span>
+                            <span className="inline-block">{user.documentCounts.airwayBills} airway bills</span>
                           </div>
                         </div>
                       </td>
@@ -385,33 +389,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {user.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => onSelectUser(user.userId)}
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-colors ${
-                            selectedUserId === user.userId
-                              ? darkMode 
-                                ? 'bg-teal-600 text-white' 
-                                : 'bg-teal-600 text-white'
-                              : darkMode
-                              ? 'text-teal-400 hover:bg-slate-700'
-                              : 'text-teal-600 hover:bg-teal-50'
-                          }`}
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Dashboard
-                        </button>
-                        <button
-                          onClick={() => handleOpenManageUser(user)}
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-colors ml-2 ${
-                            darkMode
-                              ? 'text-slate-200 hover:bg-slate-700'
-                              : 'text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          <Edit className="w-4 h-4" />
-                          Manage
-                        </button>
+                      <td className="px-4 sm:px-6 py-4 text-sm font-medium">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            onClick={() => onSelectUser(user.userId)}
+                            className={`inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                              selectedUserId === user.userId
+                                ? darkMode 
+                                  ? 'bg-teal-600 text-white' 
+                                  : 'bg-teal-600 text-white'
+                                : darkMode
+                                ? 'text-teal-400 hover:bg-slate-700'
+                                : 'text-teal-600 hover:bg-teal-50'
+                            }`}
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span className="hidden sm:inline">View Dashboard</span>
+                            <span className="sm:hidden">View</span>
+                          </button>
+                          <button
+                            onClick={() => handleOpenManageUser(user)}
+                            className={`inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                              darkMode
+                                ? 'text-slate-200 hover:bg-slate-700'
+                                : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            <Edit className="w-4 h-4" />
+                            <span className="hidden sm:inline">Manage</span>
+                            <span className="sm:hidden">Edit</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

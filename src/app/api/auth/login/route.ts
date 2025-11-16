@@ -44,10 +44,18 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // Enforce admin-only login when requested
+    // Enforce role-based login restrictions
     if (mode === 'admin' && user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin access required. Please use the member login instead.' },
+        { status: 403 }
+      );
+    }
+    
+    // Enforce user-only login when mode is 'user' (non-admin users)
+    if (mode === 'user' && user.role === 'admin') {
+      return NextResponse.json(
+        { error: 'Admin users must use the admin login. Please use the admin login instead.' },
         { status: 403 }
       );
     }

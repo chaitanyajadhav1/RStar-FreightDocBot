@@ -55,7 +55,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
   const isAdminMode = authRole === 'admin'
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-teal-50 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-slate-50 to-teal-50 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700">
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-4">
@@ -82,10 +82,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
             </div>
           </div>
 
-          {/* Role Selector - Only show if onSetRole is provided */}
-          {onSetRole && (
+          {/* Role Selector - Only show during registration, not login */}
+          {onSetRole && !isLogin && (
             <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Login/Register as:</p>
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Register as:</p>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -111,6 +111,32 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({
                   <Shield className="w-4 h-4" />
                   Admin
                 </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Login Mode Indicator - Show which mode you're logging in as */}
+          {isLogin && (
+            <div className={`mt-4 p-3 rounded-lg border ${
+              isAdminMode 
+                ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700' 
+                : 'bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-700'
+            }`}>
+              <div className="flex items-center gap-2">
+                {isAdminMode ? (
+                  <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                ) : (
+                  <User className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                )}
+                <p className={`text-xs font-medium ${
+                  isAdminMode 
+                    ? 'text-purple-900 dark:text-purple-300' 
+                    : 'text-teal-900 dark:text-teal-300'
+                }`}>
+                  {isAdminMode 
+                    ? 'Admin Login Mode - Only admin accounts can login here' 
+                    : 'User Login Mode - Only member accounts can login here'}
+                </p>
               </div>
             </div>
           )}

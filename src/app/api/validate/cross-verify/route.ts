@@ -368,7 +368,87 @@ function validateFumigationWithCommercial(commercialData: any, fumigationData: a
   let matchedFields = 0;
   let totalFields = 0;
 
-  // Invoice reference validations
+  // CD – Fumigation Certificate: Shipping mark or brand → Commercial Invoice No. and Date
+  if (fumigationData.shippingMark) {
+    const shippingMark = String(fumigationData.shippingMark).trim();
+    const invoiceNo = String(commercialData.invoice_no || '').trim();
+    const invoiceDate = commercialData.invoice_date ? normalizeDate(commercialData.invoice_date) : null;
+    
+    // Check if shipping mark contains invoice number
+    let invoiceNoMatch = false;
+    if (invoiceNo && shippingMark) {
+      // Extract invoice number from shipping mark (could be in format like "222500187 Dt 17.07.2025")
+      const invoiceNoInMark = shippingMark.match(/\d+/);
+      if (invoiceNoInMark) {
+        invoiceNoMatch = invoiceNoInMark[0] === invoiceNo || shippingMark.includes(invoiceNo);
+      } else {
+        invoiceNoMatch = shippingMark.includes(invoiceNo);
+      }
+    }
+    
+    // Check if shipping mark contains invoice date
+    let invoiceDateMatch = false;
+    if (invoiceDate && shippingMark) {
+      // Try to find date in shipping mark (format could be DD.MM.YYYY, DD/MM/YYYY, etc.)
+      // First try DD.MM.YYYY or DD/MM/YYYY format (most common in shipping marks)
+      const ddmmyyyyPattern = /(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/;
+      const ddmmyyyyMatch = shippingMark.match(ddmmyyyyPattern);
+      if (ddmmyyyyMatch) {
+        const [, day, month, year] = ddmmyyyyMatch;
+        const extractedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        if (extractedDate === invoiceDate) {
+          invoiceDateMatch = true;
+        }
+      }
+      
+      // If not matched, try YYYY-MM-DD format
+      if (!invoiceDateMatch) {
+        const yyyymmddPattern = /(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})/;
+        const yyyymmddMatch = shippingMark.match(yyyymmddPattern);
+        if (yyyymmddMatch) {
+          const [, year, month, day] = yyyymmddMatch;
+          const extractedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          if (extractedDate === invoiceDate) {
+            invoiceDateMatch = true;
+          }
+        }
+      }
+    }
+    
+    // Validate shipping mark contains invoice number
+    if (invoiceNo) {
+      totalFields++;
+      const result = {
+        match: invoiceNoMatch,
+        commercialValue: commercialData.invoice_no,
+        documentValue: fumigationData.shippingMark,
+        message: !invoiceNoMatch 
+          ? `Shipping mark/brand does not contain Commercial Invoice No: "${commercialData.invoice_no}"`
+          : undefined
+      };
+      validationDetails.shippingMarkInvoiceNo = result;
+      if (result.match) matchedFields++;
+      if (!result.match && result.message) mismatches.push(result.message);
+    }
+    
+    // Validate shipping mark contains invoice date
+    if (invoiceDate) {
+      totalFields++;
+      const result = {
+        match: invoiceDateMatch,
+        commercialValue: commercialData.invoice_date,
+        documentValue: fumigationData.shippingMark,
+        message: !invoiceDateMatch 
+          ? `Shipping mark/brand does not contain Commercial Invoice Date: "${commercialData.invoice_date}"`
+          : undefined
+      };
+      validationDetails.shippingMarkInvoiceDate = result;
+      if (result.match) matchedFields++;
+      if (!result.match && result.message) mismatches.push(result.message);
+    }
+  }
+
+  // Invoice reference validations (fallback if shipping mark validation not available)
   if (fumigationData.invoiceNumber) {
     totalFields++;
     const result = validateField(commercialData.invoice_no, fumigationData.invoiceNumber, 'Invoice Number');
@@ -527,11 +607,11 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
   }
 
   // ============================================
-  // SHIPPING BILL VALIDATIONS
+  // CD – Annexure A: SHIPPING BILL VALIDATIONS
   // ============================================
+  // Shipping Bill No - should be present (validated for presence)
   if (exportDeclarationData.shippingBillNo) {
     totalFields++;
-    // Shipping bill number should be present in export declaration
     validationDetails.shippingBillNo = {
       match: true,
       commercialValue: 'N/A (Commercial Invoice)',
@@ -541,6 +621,7 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
     matchedFields++; // Shipping bill is export-specific, so presence is good
   }
 
+  // CD – Annexure A: Shipping Date → Commercial Invoice Shipping Date (validated against invoice date logic)
   if (exportDeclarationData.shippingBillDate) {
     totalFields++;
     // Shipping bill date should be logical (not before invoice date)
@@ -557,14 +638,14 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
       // Shipping bill date should not be before invoice date
       if (shippingBillDateTime < invoiceDateTime) {
         dateLogicValid = false;
-        dateMessage = `Shipping Bill Date (${exportDeclarationData.shippingBillDate}) cannot be before Invoice Date (${commercialData.invoice_date})`;
+        dateMessage = `Shipping Date (${exportDeclarationData.shippingBillDate}) cannot be before Commercial Invoice Date (${commercialData.invoice_date})`;
       }
     }
     
     const result = {
       match: dateLogicValid,
       message: dateMessage || undefined,
-      commercialValue: 'N/A (Commercial Invoice)',
+      commercialValue: commercialData.invoice_date || 'N/A (Commercial Invoice)',
       documentValue: exportDeclarationData.shippingBillDate,
       dateLogic: dateLogicValid ? 'valid' : 'invalid'
     };
@@ -686,14 +767,14 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
   };
 }
 
-// Airway Bill Validation Function
+// Airlines – Airway Bill Validation Function
 function validateAirwayBillWithCommercial(commercialData: any, airwayBillData: any): VerificationResult {
   const validationDetails: any = {};
   const mismatches: string[] = [];
   let matchedFields = 0;
   let totalFields = 0;
 
-  // Invoice reference validations
+  // Airlines – Airway Bill: Invoice No → Commercial Invoice No
   if (airwayBillData.invoice_no) {
     totalFields++;
     const result = validateField(commercialData.invoice_no, airwayBillData.invoice_no, 'Invoice Number');
@@ -702,6 +783,7 @@ function validateAirwayBillWithCommercial(commercialData: any, airwayBillData: a
     if (!result.match && result.message) mismatches.push(result.message);
   }
 
+  // Airlines – Airway Bill: Invoice Date → Commercial Invoice Date
   if (airwayBillData.invoice_date) {
     totalFields++;
     const normalizedCommercialDate = normalizeDate(commercialData.invoice_date);
@@ -724,23 +806,80 @@ function validateAirwayBillWithCommercial(commercialData: any, airwayBillData: a
     if (!result.match && result.message) mismatches.push(result.message);
   }
 
-  // Airway Bill specific validations
+  // Airlines – Airway Bill: Shippers Name → Commercial Invoice Shipper Name
+  if (airwayBillData.shippers_name) {
+    totalFields++;
+    const result = validateField(commercialData.exporter_name, airwayBillData.shippers_name, 'Shippers Name');
+    validationDetails.shippers_name = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Airlines – Airway Bill: Shippers Address → Commercial Invoice Shipper Address
+  if (airwayBillData.shippers_address) {
+    totalFields++;
+    const result = validateField(commercialData.exporter_address, airwayBillData.shippers_address, 'Shippers Address');
+    validationDetails.shippers_address = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Airlines – Airway Bill: Consignees Name → Commercial Invoice Consignee Name
+  if (airwayBillData.consignees_name) {
+    totalFields++;
+    const result = validateField(commercialData.consignee_name, airwayBillData.consignees_name, 'Consignees Name');
+    validationDetails.consignees_name = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Airlines – Airway Bill: Consignees Address → Commercial Invoice Consignee Address
+  if (airwayBillData.consignees_address) {
+    totalFields++;
+    const result = validateField(commercialData.consignee_address, airwayBillData.consignees_address, 'Consignees Address');
+    validationDetails.consignees_address = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Airlines – Airway Bill: Issuing Carriers Name → Commercial Invoice Carrier Name
+  if (airwayBillData.issuing_carriers_name) {
+    totalFields++;
+    // Carrier name might be in vessel_flight or other fields in commercial invoice
+    const carrierName = commercialData.vessel_flight || commercialData.carrier_name || '';
+    const result = validateField(carrierName, airwayBillData.issuing_carriers_name, 'Issuing Carriers Name');
+    validationDetails.issuing_carriers_name = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Airlines – Airway Bill: Issuing Carriers City (presence check only, no cross-validation)
+  if (airwayBillData.issuing_carriers_city) {
+    totalFields++;
+    validationDetails.issuing_carriers_city = {
+      match: true,
+      commercialValue: 'N/A (Commercial Invoice)',
+      documentValue: airwayBillData.issuing_carriers_city,
+      message: undefined
+    };
+    matchedFields++; // Presence is good
+  }
+
+  // Airlines – Airway Bill: HS Code No → Commercial Invoice HS Code
+  if (airwayBillData.hs_code_no) {
+    totalFields++;
+    const result = validateField(commercialData.hsn_code, airwayBillData.hs_code_no, 'HS Code');
+    validationDetails.hs_code_no = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Additional Airway Bill validations
   const airwayBillValidations = [
-    // Shipper/Exporter information
-    { commercialField: 'exporter_name', documentField: 'shippers_name', fieldName: 'Shipper/Exporter Name' },
-    { commercialField: 'exporter_address', documentField: 'shippers_address', fieldName: 'Shipper/Exporter Address' },
-    
-    // Consignee information
-    { commercialField: 'consignee_name', documentField: 'consignees_name', fieldName: 'Consignee Name' },
-    { commercialField: 'consignee_address', documentField: 'consignees_address', fieldName: 'Consignee Address' },
-    
     // Shipment details
     { commercialField: 'port_of_loading', documentField: 'airport_of_departure', fieldName: 'Port/Airport of Departure' },
     { commercialField: 'port_of_discharge', documentField: 'airport_of_destination', fieldName: 'Port/Airport of Destination' },
     { commercialField: 'final_destination', documentField: 'airport_of_destination', fieldName: 'Final Destination' },
-    
-    // Product details
-    { commercialField: 'hsn_code', documentField: 'hs_code_no', fieldName: 'HS Code' },
     { commercialField: 'marks_and_nos', documentField: 'marks_and_nos', fieldName: 'Marks and Numbers' }
   ];
 
