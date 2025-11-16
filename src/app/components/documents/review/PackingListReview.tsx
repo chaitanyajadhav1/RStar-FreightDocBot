@@ -26,6 +26,12 @@ interface PackingListReviewProps {
   onSetEditMode: (edit: boolean) => void
   onUpdatePackingList: () => void
   onUpdateField: (field: keyof PackingListData, value: any) => void
+  
+  // Add these three lines:
+  onUpdatePackingListBox: (index: number, field: string, value: any) => void
+  onRemovePackingListBox: (index: number) => void
+  onAddPackingListBox: () => void
+  
   onNextStep: () => void
   canEdit?: boolean
   onDeleteDocument?: () => void
