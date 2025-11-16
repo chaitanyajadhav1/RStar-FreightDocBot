@@ -678,7 +678,7 @@ export default function FreightChatPro() {
         documentType === 'packinglist' ? '/invoice/delete/delete-packinglist' :
         documentType === 'fumigation' ? '/invoice/delete/delete-fumigation-certificate' :
         documentType === 'exportdeclaration' ? '/invoice/delete/delete-export-declaration' :
-        'invoice/delete/delete-airway-bill'
+        '/invoice/delete/delete-airway-bill'
 
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'DELETE',

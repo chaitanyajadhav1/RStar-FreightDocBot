@@ -546,6 +546,23 @@ export async function getUserExportDeclarations(userId: string) {
 
   return data;
 }
+
+
+export async function getUserAirwayBills(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('airway_bills')
+    .select('*')
+    .eq('user_id', userId)
+    .order('uploaded_at', { ascending: false });
+
+  if (error) {
+    console.error('[DB] User export declarations fetch error:', error);
+    throw error;
+  }
+
+  return data;
+}
+
 export async function getOrganizationInvoices(organizationId: string) {
   console.log('[DB] Fetching all invoices for organization:', organizationId);
   
@@ -1292,7 +1309,39 @@ export async function updateInvoice(
   return data;
 }
 // ========== SHARED INVOICE MANAGEMENT ==========
-
+export async function getInvoiceByInvoiceNoAndUserId(invoiceNo: string, userId: string) {
+  console.log('[DB] Fetching invoice by invoice_no and user_id:', { invoiceNo, userId });
+  
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('invoices')
+      .select('*')
+      .eq('invoice_no', invoiceNo)
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        console.log('[DB] Invoice not found');
+        return null;
+      }
+      console.error('[DB] Error fetching invoice:', error);
+      throw error;
+    }
+    
+    console.log('[DB] ✓ Invoice found:', {
+      invoice_id: data.invoice_id,
+      invoice_no: data.invoice_no,
+      user_id: data.user_id
+    });
+    
+    return data;
+  } catch (err) {
+    console.error('[DB] Exception in getInvoiceByInvoiceNoAndUserId:', err);
+    throw err;
+  }
+}
 export async function createSharedInvoice(invoiceId: string, shareData: {
   sharedBy: string;
   sharedWith?: string;

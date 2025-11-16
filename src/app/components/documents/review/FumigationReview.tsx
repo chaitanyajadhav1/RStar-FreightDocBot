@@ -40,14 +40,16 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
   if (editFumigationMode) {
     return (
       <div className="h-full flex">
-        {/* Left Section - Edit Form (compact when PDF is open) */}
+        {/* Left Section - Edit Form */}
         <div className={`${isPdfOpen ? 'w-1/2 pr-4' : 'w-full'} flex flex-col overflow-y-auto py-4 transition-all duration-300`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent mb-1">
                 Edit Fumigation Certificate
               </h2>
-              <p className="text-base text-slate-600 dark:text-slate-400">Update the extracted fumigation data as needed</p>
+              <p className="text-base text-slate-600 dark:text-slate-400">
+                Update the extracted fumigation data as needed
+              </p>
             </div>
             <button
               onClick={() => onTogglePdf('fumigation')}
@@ -64,30 +66,32 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
                 <Wind className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{currentFumigation.filename}</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {currentFumigation.filename}
+                </h3>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs rounded-full font-medium">
                   Editing Mode
                 </span>
               </div>
             </div>
 
-          {onDeleteDocument && (
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={onDeleteDocument}
-                disabled={fumigationUpdating}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Document
-              </button>
-            </div>
-          )}
+            {onDeleteDocument && (
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={onDeleteDocument}
+                  disabled={fumigationUpdating}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Document
+                </button>
+              </div>
+            )}
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== CERTIFICATE INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Certificate Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -116,10 +120,10 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== TREATMENT DETAILS ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Treatment Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Wind className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -168,7 +172,9 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               <div className="flex items-start gap-2">
                 <Wind className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-2.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Gastight Sheets Used</label>
+                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">
+                    Gastight Sheets Used
+                  </label>
                   <select
                     className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-slate-800 dark:text-white"
                     value={currentFumigation.gastightSheets === null ? 'null' : currentFumigation.gastightSheets ? 'true' : 'false'}
@@ -189,10 +195,10 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== GOODS DESCRIPTION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Goods Description */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -273,22 +279,20 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
                 icon={Hash}
               />
                
-              
-               <EditableField 
-                label="Invoice Date (Fumigation Certificate)" 
-                              value={currentFumigation.invoiceDateFumigationCertificate} 
-                              onChange={(value) => onUpdateField('invoiceDateFumigationCertificate', value)}
-                              type="date"
-                              icon={Calendar}
-                            />
+              <EditableField 
+                label="Invoice Date" 
+                value={currentFumigation.invoiceDateFumigationCertificate} 
+                onChange={(value) => onUpdateField('invoiceDateFumigationCertificate', value)}
+                type="date"
+                icon={Calendar}
+              />
                         
-               <EditableField 
-                label="Invoice No (Fumigation Certificate)" 
+              <EditableField 
+                label="Invoice Number" 
                 value={currentFumigation.invoiceNoFumigationCertificate} 
                 onChange={(value) => onUpdateField('invoiceNoFumigationCertificate', value)}
                 icon={Hash}
               />
-              
               
               <div className="col-span-2">
                 <EditableField 
@@ -302,10 +306,10 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               </div>
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== REFERENCED INVOICE ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Referenced Invoice */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -328,10 +332,10 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== OPERATOR INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Operator Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -355,7 +359,9 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-2.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Operator Signature Status</label>
+                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">
+                    Operator Signature Status
+                  </label>
                   <select
                     className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-slate-800 dark:text-white"
                     value={currentFumigation.operatorSignatureStatus === null ? 'null' : currentFumigation.operatorSignatureStatus ? 'true' : 'false'}
@@ -369,7 +375,7 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               </div>
             </div>
 
-            {/* ===== ACTION BUTTONS ===== */}
+            {/* Action Buttons */}
             <div className="flex gap-3 justify-center mt-6">
               <button
                 onClick={() => onSetEditMode(false)}
@@ -385,7 +391,7 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               >
                 {fumigationUpdating ? (
                   <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Saving...
                   </>
                 ) : (
@@ -482,29 +488,39 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               <Wind className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{currentFumigation.filename}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {currentFumigation.filename}
+              </h3>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs rounded-full font-medium">
                 Fumigation Certificate
               </span>
             </div>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Certificate Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Certificate Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                Certificate Information
+              </h4>
             </div>
             <DataField label="Certificate Number" value={currentFumigation.certificateNumber} icon={Hash} />
             <DataField label="Certificate Date" value={currentFumigation.certificateDate} icon={Calendar} />
             <DataField label="DPPQS Registration Number" value={currentFumigation.dppqsRegistrationNumber} icon={Hash} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Treatment Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Treatment Details</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Wind className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                Treatment Details
+              </h4>
             </div>
             <DataField label="Fumigant Name" value={currentFumigation.fumigantName} icon={Wind} />
             <DataField label="Fumigation Date" value={currentFumigation.fumigationDate} icon={Calendar} />
@@ -520,11 +536,15 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
             <DataField label="Pressure Decay Value" value={currentFumigation.pressureDecayValue} icon={Droplet} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Goods Description */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Goods Description</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Package className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                Goods Description
+              </h4>
             </div>
             <DataField label="Container Number" value={currentFumigation.containerNumber} icon={Package} />
             <DataField label="Seal Number" value={currentFumigation.sealNumber} icon={Hash} />
@@ -532,36 +552,37 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
             <DataField label="Consignee Name" value={currentFumigation.consigneeName} icon={User} />
             {currentFumigation.exporterAddress && (
               <div className="col-span-2">
-                <div className="text-xs text-slate-600 dark:text-slate-400 mb-1">Exporter Address</div>
-                <div className="text-sm font-medium text-slate-900 dark:text-white">{currentFumigation.exporterAddress}</div>
+                <DataField label="Exporter Address" value={currentFumigation.exporterAddress} icon={MapPin} />
               </div>
             )}
             <DataField label="Cargo Type" value={currentFumigation.cargoType} icon={Package} />
             <DataField label="Quantity" value={currentFumigation.quantity} icon={Hash} />
             {currentFumigation.cargoDescription && (
               <div className="col-span-2">
-                <div className="text-xs text-slate-600 dark:text-slate-400 mb-1">Cargo Description</div>
-                <div className="text-sm font-medium text-slate-900 dark:text-white">{currentFumigation.cargoDescription}</div>
+                <DataField label="Cargo Description" value={currentFumigation.cargoDescription} icon={FileText} />
               </div>
             )}
             <DataField label="Packaging Material" value={currentFumigation.packagingMaterial} icon={Package} />
             <DataField label="Shipping Mark" value={currentFumigation.shippingMark} icon={Hash} />
-            <DataField label="invoiceNoFumigationCertificate" value={currentFumigation.invoiceNoFumigationCertificate} icon={Hash} />
-            <DataField label="invoiceDateFumigationCertificate" value={currentFumigation.invoiceDateFumigationCertificate} icon={Calendar} />
+            <DataField label="Invoice Number" value={currentFumigation.invoiceNoFumigationCertificate} icon={Hash} />
+            <DataField label="Invoice Date" value={currentFumigation.invoiceDateFumigationCertificate} icon={Calendar} />
 
             {currentFumigation.additionalDeclaration && (
               <div className="col-span-2">
-                <div className="text-xs text-slate-600 dark:text-slate-400 mb-1">Additional Declaration</div>
-                <div className="text-sm font-medium text-slate-900 dark:text-white">{currentFumigation.additionalDeclaration}</div>
+                <DataField label="Additional Declaration" value={currentFumigation.additionalDeclaration} icon={FileText} />
               </div>
             )}
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Referenced Invoice */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Referenced Invoice</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                Referenced Invoice
+              </h4>
             </div>
             <DataField label="Invoice Number" value={currentFumigation.invoiceNumber} icon={Hash} />
             <DataField label="Invoice Date" value={currentFumigation.invoiceDate} icon={Calendar} />
@@ -580,11 +601,15 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
             )}
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Operator Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Operator Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                Operator Information
+              </h4>
             </div>
             <DataField label="Operator Name" value={currentFumigation.operatorName} icon={User} />
             <DataField label="Accreditation Number" value={currentFumigation.accreditationNumber} icon={Hash} />
@@ -596,12 +621,14 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
           </div>
         </div>
 
-        {(Array.isArray(currentFumigation.validation_warnings) && currentFumigation.validation_warnings.length > 0) && (
+        {Array.isArray(currentFumigation.validation_warnings) && currentFumigation.validation_warnings.length > 0 && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3 mb-4">
             <h4 className="font-semibold text-amber-900 dark:text-amber-300 mb-2 text-sm">Warnings</h4>
             <ul className="list-disc list-inside space-y-1 text-xs">
               {currentFumigation.validation_warnings.map((warning, idx) => (
-                <li key={idx} className="text-amber-800 dark:text-amber-400">{warning}</li>
+                <li key={idx} className="text-amber-800 dark:text-amber-400">
+                  {warning}
+                </li>
               ))}
             </ul>
           </div>
@@ -617,13 +644,23 @@ export const FumigationReview: React.FC<FumigationReviewProps> = ({
               Edit Data
             </button>
           )}
-          <button
-            onClick={onNextStep}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-sm"
-          >
-            Continue to Next Document
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {onDeleteDocument && (
+            <button
+              onClick={onDeleteDocument}
+              disabled={fumigationUpdating}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-rose-200 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors duration-200 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Document
+            </button>
+          )}
+                                <button
+                                onClick={onNextStep}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-sm"
+                                   >
+                                Continue to Next Document
+                                <ChevronRight className="w-4 h-4" />
+                                </button>
         </div>
       </div>
 

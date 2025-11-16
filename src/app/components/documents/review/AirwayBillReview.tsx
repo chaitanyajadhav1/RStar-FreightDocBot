@@ -53,7 +53,9 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent mb-1">
                 Edit Airway Bill
               </h2>
-              <p className="text-base text-slate-600 dark:text-slate-400">Update the extracted airway bill data as needed</p>
+              <p className="text-base text-slate-600 dark:text-slate-400">
+                Update the extracted airway bill data as needed
+              </p>
             </div>
             <button
               onClick={() => onTogglePdf('airwaybill')}
@@ -70,30 +72,32 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
                 <Plane className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{currentAirwayBill.filename}</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {currentAirwayBill.filename}
+                </h3>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">
                   Editing Mode
                 </span>
               </div>
             </div>
 
-          {onDeleteDocument && (
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={onDeleteDocument}
-                disabled={airwayBillUpdating}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Document
-              </button>
-            </div>
-          )}
+            {onDeleteDocument && (
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={onDeleteDocument}
+                  disabled={airwayBillUpdating}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Document
+                </button>
+              </div>
+            )}
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== DOCUMENT INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Document Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -128,10 +132,10 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== SHIPPER INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Shipper Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -150,14 +154,15 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
                 value={currentAirwayBill.shippers_address || ''} 
                 onChange={(value) => onUpdateField('shippers_address', value)}
                 icon={MapPin}
-                multiline
+                multiline={true}
+                rows={3}
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== CONSIGNEE INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Consignee Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -176,14 +181,15 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
                 value={currentAirwayBill.consignees_address || ''} 
                 onChange={(value) => onUpdateField('consignees_address', value)}
                 icon={MapPin}
-                multiline
+                multiline={true}
+                rows={3}
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== CARRIER INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Carrier Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Plane className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -211,10 +217,10 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== SHIPMENT DETAILS ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Shipment Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -239,14 +245,15 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
                 value={currentAirwayBill.accounting_information || ''} 
                 onChange={(value) => onUpdateField('accounting_information', value)}
                 icon={FileText}
-                multiline
+                multiline={true}
+                rows={3}
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== CARGO DETAILS ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Cargo Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -284,12 +291,13 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
                   value={currentAirwayBill.nature_of_goods || ''} 
                   onChange={(value) => onUpdateField('nature_of_goods', value)}
                   icon={FileText}
-                  multiline
+                  multiline={true}
+                  rows={3}
                 />
               </div>
             </div>
 
-            {/* ===== ACTION BUTTONS ===== */}
+            {/* Action Buttons */}
             <div className="flex gap-3 justify-center mt-6">
               <button
                 onClick={() => onSetEditMode(false)}
@@ -305,7 +313,7 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
               >
                 {airwayBillUpdating ? (
                   <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Saving...
                   </>
                 ) : (
@@ -402,18 +410,24 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
               <Plane className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{currentAirwayBill.filename}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {currentAirwayBill.filename}
+              </h3>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">
                 Airway Bill
               </span>
             </div>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Document Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Document Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Document Information
+              </h4>
             </div>
             <DataField label="Document Type" value={getDisplayValue(currentAirwayBill.document_type)} icon={FileText} />
             <DataField label="Airway Bill Number" value={getDisplayValue(currentAirwayBill.airway_bill_no)} icon={Hash} />
@@ -421,42 +435,58 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
             <DataField label="Invoice Date" value={getDisplayValue(currentAirwayBill.invoice_date)} icon={Calendar} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Shipper Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Shipper Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Shipper Information
+              </h4>
             </div>
             <DataField label="Shipper's Name" value={getDisplayValue(currentAirwayBill.shippers_name)} icon={User} />
             <DataField label="Shipper's Address" value={getDisplayValue(currentAirwayBill.shippers_address)} icon={MapPin} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Consignee Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Consignee Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Consignee Information
+              </h4>
             </div>
             <DataField label="Consignee's Name" value={getDisplayValue(currentAirwayBill.consignees_name)} icon={User} />
             <DataField label="Consignee's Address" value={getDisplayValue(currentAirwayBill.consignees_address)} icon={MapPin} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Carrier Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Carrier Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Plane className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Carrier Information
+              </h4>
             </div>
             <DataField label="Issuing Carrier's Name" value={getDisplayValue(currentAirwayBill.issuing_carriers_name)} icon={Plane} />
             <DataField label="Issuing Carrier's City" value={getDisplayValue(currentAirwayBill.issuing_carriers_city)} icon={MapPin} />
             <DataField label="Agent's IATA Code" value={getDisplayValue(currentAirwayBill.agents_iata_code)} icon={Hash} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Shipment Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Shipment Details</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Shipment Details
+              </h4>
             </div>
             <DataField label="Airport of Departure" value={getDisplayValue(currentAirwayBill.airport_of_departure)} icon={Plane} />
             <DataField label="Airport of Destination" value={getDisplayValue(currentAirwayBill.airport_of_destination)} icon={Plane} />
@@ -465,11 +495,15 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
             </div>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Cargo Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Cargo Details</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Cargo Details
+              </h4>
             </div>
             <DataField label="HS Code Number" value={getDisplayValue(currentAirwayBill.hs_code_no)} icon={Hash} />
             <DataField label="Number of Pieces" value={getDisplayValue(currentAirwayBill.no_of_pieces)} icon={Package} />
@@ -493,12 +527,14 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
           )}
         </div>
 
-        {(Array.isArray(currentAirwayBill.validation_warnings) && currentAirwayBill.validation_warnings.length > 0) && (
+        {Array.isArray(currentAirwayBill.validation_warnings) && currentAirwayBill.validation_warnings.length > 0 && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3 mb-4">
             <h4 className="font-semibold text-amber-900 dark:text-amber-300 mb-2 text-sm">Warnings</h4>
             <ul className="list-disc list-inside space-y-1 text-xs">
               {currentAirwayBill.validation_warnings.map((warning, idx) => (
-                <li key={idx} className="text-amber-800 dark:text-amber-400">{warning}</li>
+                <li key={idx} className="text-amber-800 dark:text-amber-400">
+                  {warning}
+                </li>
               ))}
             </ul>
           </div>
@@ -514,13 +550,23 @@ export const AirwayBillReview: React.FC<AirwayBillReviewProps> = ({
               Edit Data
             </button>
           )}
-          <button
-            onClick={onNextStep}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-sm"
-          >
-            Complete Process
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {onDeleteDocument && (
+            <button
+              onClick={onDeleteDocument}
+              disabled={airwayBillUpdating}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-rose-200 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors duration-200 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Document
+            </button>
+          )}
+                                <button
+                               onClick={onNextStep}
+                               className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-sm"
+                                  >
+                               Continue to Next Document
+                               <ChevronRight className="w-4 h-4" />
+                               </button>
         </div>
       </div>
 

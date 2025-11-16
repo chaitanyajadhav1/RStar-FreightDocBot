@@ -16,6 +16,7 @@ const OPENAI_CONFIG = {
 // ============================================
 // INVOICE DATA INTERFACES
 // ============================================
+
 export interface CommercialInvoiceData {
   invoiceNo: string | null;
   date: string | null;

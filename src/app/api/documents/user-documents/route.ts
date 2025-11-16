@@ -1,15 +1,15 @@
 // src/app/api/documents/user-documents/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyUserToken, getUserById } from '@/lib/auth'; // Changed from verifyToken to verifyUserToken
+import { verifyUserToken, getUserById } from '@/lib/auth';
 import {
   getUserInvoices,
   getUserSCOMETDeclarations,
   getUserPackingLists,
   getUserFumigationCertificates,
-  getUserExportDeclarations
+  getUserExportDeclarations,
+  getUserAirwayBills // Add this import
 } from '@/lib/database';
-
 
 function safeParseJSON(value: any, defaultValue: any = []): any {
   if (Array.isArray(value)) return value;
@@ -23,8 +23,6 @@ function safeParseJSON(value: any, defaultValue: any = []): any {
   }
   return defaultValue;
 }
-
-
 
 export async function GET(request: NextRequest) {
   console.log('[API] GET /api/documents/user-documents - Fetching user documents');
@@ -40,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    const decoded = await verifyUserToken(token); // Changed to await and use verifyUserToken
+    const decoded = await verifyUserToken(token);
 
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
@@ -101,19 +99,21 @@ export async function GET(request: NextRequest) {
     const adminNotes = Array.isArray(userMetadata.admin_notes) ? userMetadata.admin_notes : [];
     const lastAdminMessage = userMetadata.last_admin_message || null;
 
-    // Fetch all document types for the user in parallel
+    // Fetch all document types for the user in parallel (including airway bills)
     const [
       invoices,
       scometDeclarations,
       packingLists,
       fumigationCertificates,
-      exportDeclarations
+      exportDeclarations,
+      airwayBills // Add airway bills to the parallel fetch
     ] = await Promise.all([
       getUserInvoices(userId),
       getUserSCOMETDeclarations(userId),
       getUserPackingLists(userId),
       getUserFumigationCertificates(userId),
-      getUserExportDeclarations(userId)
+      getUserExportDeclarations(userId),
+      getUserAirwayBills(userId) // Fetch airway bills
     ]);
 
     console.log('[API] Documents found:', {
@@ -121,7 +121,8 @@ export async function GET(request: NextRequest) {
       scomet: scometDeclarations.length,
       packingLists: packingLists.length,
       fumigationCertificates: fumigationCertificates.length,
-      exportDeclarations: exportDeclarations.length
+      exportDeclarations: exportDeclarations.length,
+      airwayBills: airwayBills.length // Log airway bills count
     });
 
     // Get the most recent document of each type
@@ -130,94 +131,92 @@ export async function GET(request: NextRequest) {
     const mostRecentPackingList = packingLists.length > 0 ? packingLists[0] : null;
     const mostRecentFumigation = fumigationCertificates.length > 0 ? fumigationCertificates[0] : null;
     const mostRecentExportDeclaration = exportDeclarations.length > 0 ? exportDeclarations[0] : null;
+    const mostRecentAirwayBill = airwayBills.length > 0 ? airwayBills[0] : null; // Get most recent airway bill
 
     // Transform the data to match frontend expectations
     const transformedData: any = {};
 
     // Transform Commercial Invoice
-    // Transform Commercial Invoice
-if (mostRecentInvoice) {
-  // Parse items if it's a string
-  let items = mostRecentInvoice.items;
-  if (typeof items === 'string') {
-    try {
-      items = JSON.parse(items);
-    } catch (e) {
-      console.error('Error parsing items:', e);
-      items = [];
-    }
-  }
+    if (mostRecentInvoice) {
+      let items = mostRecentInvoice.items;
+      if (typeof items === 'string') {
+        try {
+          items = JSON.parse(items);
+        } catch (e) {
+          console.error('Error parsing items:', e);
+          items = [];
+        }
+      }
 
-  // Parse validation errors/warnings
-  let validationErrors = mostRecentInvoice.validation_errors;
-  if (typeof validationErrors === 'string') {
-    try {
-      validationErrors = JSON.parse(validationErrors);
-    } catch (e) {
-      validationErrors = [];
-    }
-  }
+      let validationErrors = mostRecentInvoice.validation_errors;
+      if (typeof validationErrors === 'string') {
+        try {
+          validationErrors = JSON.parse(validationErrors);
+        } catch (e) {
+          validationErrors = [];
+        }
+      }
 
-  let validationWarnings = mostRecentInvoice.validation_warnings;
-  if (typeof validationWarnings === 'string') {
-    try {
-      validationWarnings = JSON.parse(validationWarnings);
-    } catch (e) {
-      validationWarnings = [];
-    }
-  }
+      let validationWarnings = mostRecentInvoice.validation_warnings;
+      if (typeof validationWarnings === 'string') {
+        try {
+          validationWarnings = JSON.parse(validationWarnings);
+        } catch (e) {
+          validationWarnings = [];
+        }
+      }
 
-  transformedData.invoice = {
-    invoiceId: mostRecentInvoice.invoice_id,
-    filename: mostRecentInvoice.filename,
-    fileUrl: mostRecentInvoice.filepath,
-    invoice_no: mostRecentInvoice.invoice_no,
-    invoice_date: mostRecentInvoice.invoice_date,
-    reference_no: mostRecentInvoice.reference_no,
-    proforma_invoice_no: mostRecentInvoice.proforma_invoice_no,
-    marks_and_nos: mostRecentInvoice.marks_and_nos || null,
-    currency: mostRecentInvoice.currency,
-    total_amount: mostRecentInvoice.total_amount,
-    item_count: mostRecentInvoice.item_count,
-    
-    consignee_name: mostRecentInvoice.consignee_name,
-    consignee_address: mostRecentInvoice.consignee_address,
-    consignee_email: mostRecentInvoice.consignee_email,
-    consignee_phone: mostRecentInvoice.consignee_phone,
-    consignee_country: mostRecentInvoice.consignee_country,
-    
-    exporter_name: mostRecentInvoice.exporter_name,
-    exporter_address: mostRecentInvoice.exporter_address,
-    exporter_email: mostRecentInvoice.exporter_email,
-    exporter_phone: mostRecentInvoice.exporter_phone,
-    exporter_pan: mostRecentInvoice.exporter_pan,
-    exporter_gstin: mostRecentInvoice.exporter_gstin,
-    exporter_iec: mostRecentInvoice.exporter_iec,
-    
-    incoterms: mostRecentInvoice.incoterms,
-    place_of_receipt: mostRecentInvoice.place_of_receipt,
-    port_of_loading: mostRecentInvoice.port_of_loading,
-    port_of_discharge: mostRecentInvoice.port_of_discharge,
-    final_destination: mostRecentInvoice.final_destination,
-    country_of_origin: mostRecentInvoice.country_of_origin,
-    country_of_destination: mostRecentInvoice.country_of_destination,
-    hsn_code: mostRecentInvoice.hsn_code,
-    
-    bank_name: mostRecentInvoice.bank_name,
-    bank_account: mostRecentInvoice.bank_account,
-    bank_swift_code: mostRecentInvoice.bank_swift_code,
-    bank_ifsc_code: mostRecentInvoice.bank_ifsc_code,
-    payment_terms: mostRecentInvoice.payment_terms,
-    
-    has_signature: mostRecentInvoice.has_signature,
-    verification_status: mostRecentInvoice.verification_status,
-    completeness: mostRecentInvoice.completeness,
-    validation_errors: Array.isArray(validationErrors) ? validationErrors : [],
-    validation_warnings: Array.isArray(validationWarnings) ? validationWarnings : [],
-    
-    items: Array.isArray(items) ? items : [] // ✅ Ensure it's an array
-  };
-}
+      transformedData.invoice = {
+        invoiceId: mostRecentInvoice.invoice_id,
+        filename: mostRecentInvoice.filename,
+        fileUrl: mostRecentInvoice.filepath,
+        invoice_no: mostRecentInvoice.invoice_no,
+        invoice_date: mostRecentInvoice.invoice_date,
+        reference_no: mostRecentInvoice.reference_no,
+        proforma_invoice_no: mostRecentInvoice.proforma_invoice_no,
+        marks_and_nos: mostRecentInvoice.marks_and_nos || null,
+        currency: mostRecentInvoice.currency,
+        total_amount: mostRecentInvoice.total_amount,
+        item_count: mostRecentInvoice.item_count,
+        
+        consignee_name: mostRecentInvoice.consignee_name,
+        consignee_address: mostRecentInvoice.consignee_address,
+        consignee_email: mostRecentInvoice.consignee_email,
+        consignee_phone: mostRecentInvoice.consignee_phone,
+        consignee_country: mostRecentInvoice.consignee_country,
+        
+        exporter_name: mostRecentInvoice.exporter_name,
+        exporter_address: mostRecentInvoice.exporter_address,
+        exporter_email: mostRecentInvoice.exporter_email,
+        exporter_phone: mostRecentInvoice.exporter_phone,
+        exporter_pan: mostRecentInvoice.exporter_pan,
+        exporter_gstin: mostRecentInvoice.exporter_gstin,
+        exporter_iec: mostRecentInvoice.exporter_iec,
+        
+        incoterms: mostRecentInvoice.incoterms,
+        place_of_receipt: mostRecentInvoice.place_of_receipt,
+        port_of_loading: mostRecentInvoice.port_of_loading,
+        port_of_discharge: mostRecentInvoice.port_of_discharge,
+        final_destination: mostRecentInvoice.final_destination,
+        country_of_origin: mostRecentInvoice.country_of_origin,
+        country_of_destination: mostRecentInvoice.country_of_destination,
+        hsn_code: mostRecentInvoice.hsn_code,
+        
+        bank_name: mostRecentInvoice.bank_name,
+        bank_account: mostRecentInvoice.bank_account,
+        bank_swift_code: mostRecentInvoice.bank_swift_code,
+        bank_ifsc_code: mostRecentInvoice.bank_ifsc_code,
+        payment_terms: mostRecentInvoice.payment_terms,
+        
+        has_signature: mostRecentInvoice.has_signature,
+        verification_status: mostRecentInvoice.verification_status,
+        completeness: mostRecentInvoice.completeness,
+        validation_errors: Array.isArray(validationErrors) ? validationErrors : [],
+        validation_warnings: Array.isArray(validationWarnings) ? validationWarnings : [],
+        
+        items: Array.isArray(items) ? items : []
+      };
+    }
 
     // Transform SCOMET Declaration
     if (mostRecentSCOMET) {
@@ -245,87 +244,85 @@ if (mostRecentInvoice) {
     }
 
     // Transform Packing List
-   // Transform Packing List
-if (mostRecentPackingList) {
-  // Parse boxDetails if it's a string
-  let boxDetails = mostRecentPackingList.box_details;
-  if (typeof boxDetails === 'string') {
-    try {
-      boxDetails = JSON.parse(boxDetails);
-    } catch (e) {
-      console.error('Error parsing box_details:', e);
-      boxDetails = [];
+    if (mostRecentPackingList) {
+      let boxDetails = mostRecentPackingList.box_details;
+      if (typeof boxDetails === 'string') {
+        try {
+          boxDetails = JSON.parse(boxDetails);
+        } catch (e) {
+          console.error('Error parsing box_details:', e);
+          boxDetails = [];
+        }
+      }
+      
+      transformedData.packingList = {
+        packingListId: mostRecentPackingList.packing_list_id,
+        filename: mostRecentPackingList.filename,
+        fileUrl: mostRecentPackingList.filepath,
+        packingListNumber: mostRecentPackingList.packing_list_number,
+        packingListDate: mostRecentPackingList.packing_list_date,
+        referenceNo: mostRecentPackingList.reference_no,
+        proformaInvoiceNo: mostRecentPackingList.proforma_invoice_no,
+        invoiceNumber: mostRecentPackingList.invoice_number,
+        invoiceDate: mostRecentPackingList.invoice_date,
+        
+        exporterName: mostRecentPackingList.exporter_name,
+        exporterAddress: mostRecentPackingList.exporter_address,
+        exporterEmail: mostRecentPackingList.exporter_email,
+        exporterPhone: mostRecentPackingList.exporter_phone,
+        exporterMobile: mostRecentPackingList.exporter_mobile,
+        exporterPan: mostRecentPackingList.exporter_pan,
+        exporterGstin: mostRecentPackingList.exporter_gstin,
+        exporterIec: mostRecentPackingList.exporter_iec,
+        
+        consigneeName: mostRecentPackingList.consignee_name,
+        consigneeAddress: mostRecentPackingList.consignee_address,
+        consigneeEmail: mostRecentPackingList.consignee_email,
+        consigneePhone: mostRecentPackingList.consignee_phone,
+        consigneeMobile: mostRecentPackingList.consignee_mobile,
+        consigneePoBox: mostRecentPackingList.consignee_po_box,
+        
+        bankName: mostRecentPackingList.bank_name,
+        bankAddress: mostRecentPackingList.bank_address,
+        bankAccountUsd: mostRecentPackingList.bank_account_usd,
+        bankAccountEuro: mostRecentPackingList.bank_account_euro,
+        bankIfscCode: mostRecentPackingList.bank_ifsc_code,
+        bankSwiftCode: mostRecentPackingList.bank_swift_code,
+        bankBranchCode: mostRecentPackingList.bank_branch_code,
+        bankAdCode: mostRecentPackingList.bank_ad_code,
+        bankBsrCode: mostRecentPackingList.bank_bsr_code,
+        
+        marksAndNos: mostRecentPackingList.marks_and_nos,
+        countryOfOrigin: mostRecentPackingList.country_of_origin,
+        countryOfDestination: mostRecentPackingList.country_of_destination,
+        preCarriageBy: mostRecentPackingList.pre_carriage_by,
+        placeOfReceipt: mostRecentPackingList.place_of_receipt,
+        deliveryTerms: mostRecentPackingList.delivery_terms,
+        hsnCode: mostRecentPackingList.hsn_code,
+        vesselFlightNo: mostRecentPackingList.vessel_flight_no,
+        portOfLoading: mostRecentPackingList.port_of_loading,
+        portOfDischarge: mostRecentPackingList.port_of_discharge,
+        finalDestination: mostRecentPackingList.final_destination,
+        freightTerms: mostRecentPackingList.freight_terms,
+        
+        boxDetails: Array.isArray(boxDetails) ? boxDetails : [],
+        totalBoxes: mostRecentPackingList.total_boxes,
+        totalGrossWeight: mostRecentPackingList.total_gross_weight,
+        totalNetWeight: mostRecentPackingList.total_net_weight,
+        totalBoxWeight: mostRecentPackingList.total_box_weight,
+        packageType: mostRecentPackingList.package_type,
+        
+        descriptionOfGoods: mostRecentPackingList.description_of_goods,
+        certificationStatement: mostRecentPackingList.certification_statement,
+        
+        is_valid: mostRecentPackingList.is_valid,
+        completeness: mostRecentPackingList.completeness,
+        validation_errors: mostRecentPackingList.validation_errors,
+        validation_warnings: mostRecentPackingList.validation_warnings,
+        invoiceMatchVerified: mostRecentPackingList.invoice_match_verified,
+        amountsMatchVerified: mostRecentPackingList.amounts_match_verified
+      };
     }
-  }
-  
-  transformedData.packingList = {
-    packingListId: mostRecentPackingList.packing_list_id,
-    filename: mostRecentPackingList.filename,
-    fileUrl: mostRecentPackingList.filepath,
-    packingListNumber: mostRecentPackingList.packing_list_number,
-    packingListDate: mostRecentPackingList.packing_list_date,
-    referenceNo: mostRecentPackingList.reference_no,
-    proformaInvoiceNo: mostRecentPackingList.proforma_invoice_no,
-    invoiceNumber: mostRecentPackingList.invoice_number,
-    invoiceDate: mostRecentPackingList.invoice_date,
-    
-    exporterName: mostRecentPackingList.exporter_name,
-    exporterAddress: mostRecentPackingList.exporter_address,
-    exporterEmail: mostRecentPackingList.exporter_email,
-    exporterPhone: mostRecentPackingList.exporter_phone,
-    exporterMobile: mostRecentPackingList.exporter_mobile,
-    exporterPan: mostRecentPackingList.exporter_pan,
-    exporterGstin: mostRecentPackingList.exporter_gstin,
-    exporterIec: mostRecentPackingList.exporter_iec,
-    
-    consigneeName: mostRecentPackingList.consignee_name,
-    consigneeAddress: mostRecentPackingList.consignee_address,
-    consigneeEmail: mostRecentPackingList.consignee_email,
-    consigneePhone: mostRecentPackingList.consignee_phone,
-    consigneeMobile: mostRecentPackingList.consignee_mobile,
-    consigneePoBox: mostRecentPackingList.consignee_po_box,
-    
-    bankName: mostRecentPackingList.bank_name,
-    bankAddress: mostRecentPackingList.bank_address,
-    bankAccountUsd: mostRecentPackingList.bank_account_usd,
-    bankAccountEuro: mostRecentPackingList.bank_account_euro,
-    bankIfscCode: mostRecentPackingList.bank_ifsc_code,
-    bankSwiftCode: mostRecentPackingList.bank_swift_code,
-    bankBranchCode: mostRecentPackingList.bank_branch_code,
-    bankAdCode: mostRecentPackingList.bank_ad_code,
-    bankBsrCode: mostRecentPackingList.bank_bsr_code,
-    
-    marksAndNos: mostRecentPackingList.marks_and_nos,
-    countryOfOrigin: mostRecentPackingList.country_of_origin,
-    countryOfDestination: mostRecentPackingList.country_of_destination,
-    preCarriageBy: mostRecentPackingList.pre_carriage_by,
-    placeOfReceipt: mostRecentPackingList.place_of_receipt,
-    deliveryTerms: mostRecentPackingList.delivery_terms,
-    hsnCode: mostRecentPackingList.hsn_code,
-    vesselFlightNo: mostRecentPackingList.vessel_flight_no,
-    portOfLoading: mostRecentPackingList.port_of_loading,
-    portOfDischarge: mostRecentPackingList.port_of_discharge,
-    finalDestination: mostRecentPackingList.final_destination,
-    freightTerms: mostRecentPackingList.freight_terms,
-    
-    boxDetails: Array.isArray(boxDetails) ? boxDetails : [], // ✅ Ensure it's an array
-    totalBoxes: mostRecentPackingList.total_boxes,
-    totalGrossWeight: mostRecentPackingList.total_gross_weight,
-    totalNetWeight: mostRecentPackingList.total_net_weight,
-    totalBoxWeight: mostRecentPackingList.total_box_weight,
-    packageType: mostRecentPackingList.package_type,
-    
-    descriptionOfGoods: mostRecentPackingList.description_of_goods,
-    certificationStatement: mostRecentPackingList.certification_statement,
-    
-    is_valid: mostRecentPackingList.is_valid,
-    completeness: mostRecentPackingList.completeness,
-    validation_errors: mostRecentPackingList.validation_errors,
-    validation_warnings: mostRecentPackingList.validation_warnings,
-    invoiceMatchVerified: mostRecentPackingList.invoice_match_verified,
-    amountsMatchVerified: mostRecentPackingList.amounts_match_verified
-  };
-}
 
     // Transform Fumigation Certificate
     if (mostRecentFumigation) {
@@ -408,6 +405,58 @@ if (mostRecentPackingList) {
       };
     }
 
+    // Transform Airway Bill
+    if (mostRecentAirwayBill) {
+      // Parse validation errors/warnings for airway bill
+      let validationErrors = mostRecentAirwayBill.validation_errors;
+      if (typeof validationErrors === 'string') {
+        try {
+          validationErrors = JSON.parse(validationErrors);
+        } catch (e) {
+          validationErrors = [];
+        }
+      }
+
+      let validationWarnings = mostRecentAirwayBill.validation_warnings;
+      if (typeof validationWarnings === 'string') {
+        try {
+          validationWarnings = JSON.parse(validationWarnings);
+        } catch (e) {
+          validationWarnings = [];
+        }
+      }
+
+      transformedData.airwayBill = {
+        airwayBillId: mostRecentAirwayBill.airway_bill_id,
+        filename: mostRecentAirwayBill.filename,
+        fileUrl: mostRecentAirwayBill.filepath,
+        document_type: mostRecentAirwayBill.document_type,
+        airway_bill_no: mostRecentAirwayBill.airway_bill_no,
+        invoice_no: mostRecentAirwayBill.invoice_no,
+        invoice_date: mostRecentAirwayBill.invoice_date,
+        shippers_name: mostRecentAirwayBill.shippers_name,
+        shippers_address: mostRecentAirwayBill.shippers_address,
+        consignees_name: mostRecentAirwayBill.consignees_name,
+        consignees_address: mostRecentAirwayBill.consignees_address,
+        issuing_carriers_name: mostRecentAirwayBill.issuing_carriers_name,
+        issuing_carriers_city: mostRecentAirwayBill.issuing_carriers_city,
+        agents_iata_code: mostRecentAirwayBill.agents_iata_code,
+        airport_of_departure: mostRecentAirwayBill.airport_of_departure,
+        airport_of_destination: mostRecentAirwayBill.airport_of_destination,
+        accounting_information: mostRecentAirwayBill.accounting_information,
+        hs_code_no: mostRecentAirwayBill.hs_code_no,
+        no_of_pieces: mostRecentAirwayBill.no_of_pieces,
+        gross_weight: mostRecentAirwayBill.gross_weight,
+        chargeable_weight: mostRecentAirwayBill.chargeable_weight,
+        nature_of_goods: mostRecentAirwayBill.nature_of_goods,
+        is_valid: mostRecentAirwayBill.is_valid,
+        completeness: mostRecentAirwayBill.completeness,
+        validation_errors: Array.isArray(validationErrors) ? validationErrors : [],
+        validation_warnings: Array.isArray(validationWarnings) ? validationWarnings : [],
+        invoiceMatchVerified: mostRecentAirwayBill.invoice_match_verified
+      };
+    }
+
     return NextResponse.json({
       success: true,
       data: transformedData,
@@ -423,7 +472,8 @@ if (mostRecentPackingList) {
         totalSCOMET: scometDeclarations.length,
         totalPackingLists: packingLists.length,
         totalFumigationCertificates: fumigationCertificates.length,
-        totalExportDeclarations: exportDeclarations.length
+        totalExportDeclarations: exportDeclarations.length,
+        totalAirwayBills: airwayBills.length // Add airway bills to summary
       }
     });
 

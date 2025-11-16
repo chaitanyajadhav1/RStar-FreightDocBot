@@ -63,6 +63,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ fileUrl, bucket, token }) 
         if (filePath.startsWith('export_declarations/')) {
         filePath = filePath.replace('export_declarations/', '');
         }
+
+        if (filePath.startsWith('airway_bills/')) {
+        filePath = filePath.replace('airway_bills/', '');
+        }
         
         console.log(filePath);
         console.log('Final filePath for API:', filePath);

@@ -14,7 +14,7 @@ const supabase = createClient(
 // ============================================
 interface CrossVerificationRequest {
   commercialInvoiceNumber: string;
-  documentType: 'scomet' | 'packinglist' | 'fumigation' | 'exportdeclaration';
+  documentType: 'scomet' | 'packinglist' | 'fumigation' | 'exportdeclaration' | 'airwaybill';
   documentData: any;
   userId: string;
   threadId?: string;
@@ -104,6 +104,34 @@ function normalizeDate(dateValue: any): string | null {
   return null;
 }
 
+function normalizePaymentTerms(paymentTerms: any): string {
+  if (!paymentTerms) return '';
+  
+  const terms = String(paymentTerms).toLowerCase().trim();
+  
+  // Common payment terms normalization
+  if (terms.includes('advance') || terms.includes('prepaid') || terms.includes('before shipment')) {
+    return 'advance';
+  }
+  if (terms.includes('letter of credit') || terms.includes('l/c') || terms.includes('lc')) {
+    return 'letter of credit';
+  }
+  if (terms.includes('document against payment') || terms.includes('d/p') || terms.includes('dp')) {
+    return 'document against payment';
+  }
+  if (terms.includes('document against acceptance') || terms.includes('d/a') || terms.includes('da')) {
+    return 'document against acceptance';
+  }
+  if (terms.includes('open account') || terms.includes('credit')) {
+    return 'open account';
+  }
+  if (terms.includes('cash') || terms.includes('immediate')) {
+    return 'cash';
+  }
+  
+  return terms;
+}
+
 // ============================================
 // DATABASE OPERATIONS
 // ============================================
@@ -120,11 +148,6 @@ async function getCommercialInvoiceByNumber(
       .select('*')
       .eq('invoice_no', invoiceNumber)
       .eq('user_id', userId);
-
-    // If threadId is provided, use it for more specific matching
-    // if (threadId) {
-    //   query = query.eq('thread_id', threadId);
-    // }
 
     const { data, error } = await query;
 
@@ -414,21 +437,27 @@ function validateFumigationWithCommercial(commercialData: any, fumigationData: a
   };
 }
 
+// UPDATED: Enhanced Export Declaration Validation
 function validateExportDeclarationWithCommercial(commercialData: any, exportDeclarationData: any): VerificationResult {
   const validationDetails: any = {};
   const mismatches: string[] = [];
   let matchedFields = 0;
   let totalFields = 0;
 
-  // Invoice reference validations
+  // ============================================
+  // CORE INVOICE REFERENCE VALIDATIONS
+  // ============================================
+  
+  // Invoice Number - Critical Match
   if (exportDeclarationData.invoiceNo) {
     totalFields++;
     const result = validateField(commercialData.invoice_no, exportDeclarationData.invoiceNo, 'Invoice Number');
-    validationDetails.invoiceNumber = result;
+    validationDetails.invoiceNo = result;
     if (result.match) matchedFields++;
     if (!result.match && result.message) mismatches.push(result.message);
   }
 
+  // Invoice Date - Critical Match
   if (exportDeclarationData.invoiceDate) {
     totalFields++;
     const normalizedCommercialDate = normalizeDate(commercialData.invoice_date);
@@ -451,7 +480,103 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
     if (!result.match && result.message) mismatches.push(result.message);
   }
 
-  // Export declaration specific validations
+  // ============================================
+  // PAYMENT TERMS VALIDATION - ENHANCED
+  // ============================================
+  if (exportDeclarationData.paymentTerms && commercialData.payment_terms) {
+    totalFields++;
+    
+    const normalizedCommercialPayment = normalizePaymentTerms(commercialData.payment_terms);
+    const normalizedExportPayment = normalizePaymentTerms(exportDeclarationData.paymentTerms);
+    
+    let paymentMatch = false;
+    let paymentMessage = '';
+    
+    if (normalizedCommercialPayment && normalizedExportPayment) {
+      paymentMatch = normalizedCommercialPayment === normalizedExportPayment ||
+                    normalizedCommercialPayment.includes(normalizedExportPayment) ||
+                    normalizedExportPayment.includes(normalizedCommercialPayment);
+      
+      if (!paymentMatch) {
+        paymentMessage = `Payment Terms mismatch: Commercial (${commercialData.payment_terms}) vs Export Declaration (${exportDeclarationData.paymentTerms})`;
+      }
+    } else {
+      // Fallback to exact match if normalization fails
+      const exactMatch = String(commercialData.payment_terms).toLowerCase() === 
+                        String(exportDeclarationData.paymentTerms).toLowerCase();
+      paymentMatch = exactMatch;
+      if (!paymentMatch) {
+        paymentMessage = `Payment Terms mismatch: Commercial (${commercialData.payment_terms}) vs Export Declaration (${exportDeclarationData.paymentTerms})`;
+      }
+    }
+    
+    const result = {
+      match: paymentMatch,
+      message: paymentMessage || undefined,
+      commercialValue: commercialData.payment_terms,
+      documentValue: exportDeclarationData.paymentTerms,
+      normalized: {
+        commercial: normalizedCommercialPayment,
+        export: normalizedExportPayment
+      }
+    };
+    
+    validationDetails.paymentTerms = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // ============================================
+  // SHIPPING BILL VALIDATIONS
+  // ============================================
+  if (exportDeclarationData.shippingBillNo) {
+    totalFields++;
+    // Shipping bill number should be present in export declaration
+    validationDetails.shippingBillNo = {
+      match: true,
+      commercialValue: 'N/A (Commercial Invoice)',
+      documentValue: exportDeclarationData.shippingBillNo,
+      message: undefined
+    };
+    matchedFields++; // Shipping bill is export-specific, so presence is good
+  }
+
+  if (exportDeclarationData.shippingBillDate) {
+    totalFields++;
+    // Shipping bill date should be logical (not before invoice date)
+    const invoiceDate = normalizeDate(commercialData.invoice_date);
+    const shippingBillDate = normalizeDate(exportDeclarationData.shippingBillDate);
+    
+    let dateLogicValid = true;
+    let dateMessage = '';
+    
+    if (invoiceDate && shippingBillDate) {
+      const invoiceDateTime = new Date(invoiceDate).getTime();
+      const shippingBillDateTime = new Date(shippingBillDate).getTime();
+      
+      // Shipping bill date should not be before invoice date
+      if (shippingBillDateTime < invoiceDateTime) {
+        dateLogicValid = false;
+        dateMessage = `Shipping Bill Date (${exportDeclarationData.shippingBillDate}) cannot be before Invoice Date (${commercialData.invoice_date})`;
+      }
+    }
+    
+    const result = {
+      match: dateLogicValid,
+      message: dateMessage || undefined,
+      commercialValue: 'N/A (Commercial Invoice)',
+      documentValue: exportDeclarationData.shippingBillDate,
+      dateLogic: dateLogicValid ? 'valid' : 'invalid'
+    };
+    
+    validationDetails.shippingBillDate = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // ============================================
+  // VALUATION AND BUSINESS VALIDATIONS
+  // ============================================
   const exportValidations = [
     { commercialField: 'exporter_name', documentField: 'exporterName', fieldName: 'Exporter Name' },
     { commercialField: 'consignee_name', documentField: 'consigneeName', fieldName: 'Consignee Name' },
@@ -461,7 +586,8 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
     { commercialField: 'country_of_origin', documentField: 'countryOfOrigin', fieldName: 'Country of Origin' },
     { commercialField: 'hsn_code', documentField: 'hsnCode', fieldName: 'HSN Code' },
     { commercialField: 'total_amount', documentField: 'totalAmount', fieldName: 'Total Amount' },
-    { commercialField: 'currency', documentField: 'currency', fieldName: 'Currency' }
+    { commercialField: 'currency', documentField: 'currency', fieldName: 'Currency' },
+    { commercialField: 'delivery_terms', documentField: 'deliveryTerms', fieldName: 'Delivery Terms' }
   ];
 
   exportValidations.forEach(validation => {
@@ -476,9 +602,69 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
     }
   });
 
+  // ============================================
+  // DECLARATION SPECIFIC VALIDATIONS
+  // ============================================
+  
+  // Declaration Status
+  if (exportDeclarationData.declarationStatus) {
+    totalFields++;
+    const validStatuses = ['submitted', 'approved', 'pending', 'rejected', 'completed'];
+    const statusValid = validStatuses.includes(exportDeclarationData.declarationStatus.toLowerCase());
+    
+    const result = {
+      match: statusValid,
+      message: !statusValid ? `Invalid declaration status: ${exportDeclarationData.declarationStatus}` : undefined,
+      commercialValue: 'N/A (Commercial Invoice)',
+      documentValue: exportDeclarationData.declarationStatus
+    };
+    
+    validationDetails.declarationStatus = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Signed Date Validation
+  if (exportDeclarationData.signedDate) {
+    totalFields++;
+    const signedDate = normalizeDate(exportDeclarationData.signedDate);
+    const invoiceDate = normalizeDate(commercialData.invoice_date);
+    
+    let signedDateValid = true;
+    let signedDateMessage = '';
+    
+    if (signedDate && invoiceDate) {
+      const signedDateTime = new Date(signedDate).getTime();
+      const invoiceDateTime = new Date(invoiceDate).getTime();
+      
+      // Signed date should not be before invoice date
+      if (signedDateTime < invoiceDateTime) {
+        signedDateValid = false;
+        signedDateMessage = `Signed Date (${exportDeclarationData.signedDate}) cannot be before Invoice Date (${commercialData.invoice_date})`;
+      }
+    }
+    
+    const result = {
+      match: signedDateValid,
+      message: signedDateMessage || undefined,
+      commercialValue: 'N/A (Commercial Invoice)',
+      documentValue: exportDeclarationData.signedDate
+    };
+    
+    validationDetails.signedDate = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
   // Calculate completeness
   const completeness = totalFields > 0 ? Math.round((matchedFields / totalFields) * 100) : 0;
-  const invoiceMatchVerified = mismatches.length === 0;
+  
+  // Critical validations for invoice match
+  const criticalFieldsValid = 
+    (!exportDeclarationData.invoiceNo || validationDetails.invoiceNo?.match) &&
+    (!exportDeclarationData.invoiceDate || validationDetails.invoiceDate?.match);
+  
+  const invoiceMatchVerified = mismatches.length === 0 && criticalFieldsValid;
 
   return {
     success: true,
@@ -491,7 +677,139 @@ function validateExportDeclarationWithCommercial(commercialData: any, exportDecl
     crossDocumentMatches: {
       totalFieldsChecked: totalFields,
       matchedFields,
-      matchPercentage: completeness
+      matchPercentage: completeness,
+      criticalFieldsValid,
+      paymentTermsVerified: validationDetails.paymentTerms?.match || false,
+      dateLogicVerified: validationDetails.shippingBillDate?.match && validationDetails.signedDate?.match
+    },
+    timestamp: new Date().toISOString()
+  };
+}
+
+// Airway Bill Validation Function
+function validateAirwayBillWithCommercial(commercialData: any, airwayBillData: any): VerificationResult {
+  const validationDetails: any = {};
+  const mismatches: string[] = [];
+  let matchedFields = 0;
+  let totalFields = 0;
+
+  // Invoice reference validations
+  if (airwayBillData.invoice_no) {
+    totalFields++;
+    const result = validateField(commercialData.invoice_no, airwayBillData.invoice_no, 'Invoice Number');
+    validationDetails.invoice_no = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  if (airwayBillData.invoice_date) {
+    totalFields++;
+    const normalizedCommercialDate = normalizeDate(commercialData.invoice_date);
+    const normalizedDocumentDate = normalizeDate(airwayBillData.invoice_date);
+    
+    const isMatch = normalizedCommercialDate && normalizedDocumentDate && 
+                    normalizedCommercialDate === normalizedDocumentDate;
+    
+    const result = {
+      match: isMatch,
+      message: !isMatch 
+        ? `Invoice Date mismatch: Commercial (${commercialData.invoice_date}) vs Airway Bill (${airwayBillData.invoice_date})`
+        : undefined,
+      commercialValue: commercialData.invoice_date,
+      documentValue: airwayBillData.invoice_date
+    };
+    
+    validationDetails.invoice_date = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Airway Bill specific validations
+  const airwayBillValidations = [
+    // Shipper/Exporter information
+    { commercialField: 'exporter_name', documentField: 'shippers_name', fieldName: 'Shipper/Exporter Name' },
+    { commercialField: 'exporter_address', documentField: 'shippers_address', fieldName: 'Shipper/Exporter Address' },
+    
+    // Consignee information
+    { commercialField: 'consignee_name', documentField: 'consignees_name', fieldName: 'Consignee Name' },
+    { commercialField: 'consignee_address', documentField: 'consignees_address', fieldName: 'Consignee Address' },
+    
+    // Shipment details
+    { commercialField: 'port_of_loading', documentField: 'airport_of_departure', fieldName: 'Port/Airport of Departure' },
+    { commercialField: 'port_of_discharge', documentField: 'airport_of_destination', fieldName: 'Port/Airport of Destination' },
+    { commercialField: 'final_destination', documentField: 'airport_of_destination', fieldName: 'Final Destination' },
+    
+    // Product details
+    { commercialField: 'hsn_code', documentField: 'hs_code_no', fieldName: 'HS Code' },
+    { commercialField: 'marks_and_nos', documentField: 'marks_and_nos', fieldName: 'Marks and Numbers' }
+  ];
+
+  airwayBillValidations.forEach(validation => {
+    const documentValue = airwayBillData[validation.documentField];
+    if (documentValue !== undefined && documentValue !== null && documentValue !== '') {
+      totalFields++;
+      const commercialValue = commercialData[validation.commercialField];
+      const result = validateField(commercialValue, documentValue, validation.fieldName);
+      validationDetails[validation.documentField] = result;
+      if (result.match) matchedFields++;
+      if (!result.match && result.message) mismatches.push(result.message);
+    }
+  });
+
+  // Cargo weight validation (if available)
+  let amountsMatchVerified = true;
+  if (airwayBillData.gross_weight && commercialData.total_weight) {
+    totalFields++;
+    const result = validateField(commercialData.total_weight, airwayBillData.gross_weight, 'Total Weight');
+    validationDetails.gross_weight = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) {
+      mismatches.push(result.message);
+      amountsMatchVerified = false;
+    }
+  }
+
+  // Nature of goods validation
+  if (airwayBillData.nature_of_goods && commercialData.description_of_goods) {
+    totalFields++;
+    const commercialDesc = String(commercialData.description_of_goods).toLowerCase();
+    const airwayDesc = String(airwayBillData.nature_of_goods).toLowerCase();
+    
+    // Simple substring match for goods description
+    const isMatch = commercialDesc.includes(airwayDesc) || airwayDesc.includes(commercialDesc);
+    
+    const result = {
+      match: isMatch,
+      message: !isMatch 
+        ? `Goods description mismatch: Commercial (${commercialData.description_of_goods}) vs Airway Bill (${airwayBillData.nature_of_goods})`
+        : undefined,
+      commercialValue: commercialData.description_of_goods,
+      documentValue: airwayBillData.nature_of_goods
+    };
+    
+    validationDetails.nature_of_goods = result;
+    if (result.match) matchedFields++;
+    if (!result.match && result.message) mismatches.push(result.message);
+  }
+
+  // Calculate completeness
+  const completeness = totalFields > 0 ? Math.round((matchedFields / totalFields) * 100) : 0;
+  const invoiceMatchVerified = mismatches.length === 0;
+
+  return {
+    success: true,
+    isValid: invoiceMatchVerified,
+    completeness,
+    invoiceMatchVerified,
+    amountsMatchVerified,
+    validationDetails,
+    validation_errors: invoiceMatchVerified ? [] : mismatches,
+    validation_warnings: invoiceMatchVerified ? ['All fields match commercial invoice'] : ['Some fields may require manual verification'],
+    crossDocumentMatches: {
+      totalFieldsChecked: totalFields,
+      matchedFields,
+      matchPercentage: completeness,
+      weightsVerified: amountsMatchVerified
     },
     timestamp: new Date().toISOString()
   };
@@ -551,7 +869,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validDocumentTypes = ['scomet', 'packinglist', 'fumigation', 'exportdeclaration'];
+    const validDocumentTypes = ['scomet', 'packinglist', 'fumigation', 'exportdeclaration', 'airwaybill'];
     if (!validDocumentTypes.includes(documentType)) {
       return NextResponse.json<ErrorResponse>(
         { error: `Invalid document type. Must be one of: ${validDocumentTypes.join(', ')}` },
@@ -583,7 +901,8 @@ export async function POST(request: NextRequest) {
     console.log('[Cross-Verify] ✓ Commercial invoice found:', {
       invoiceNo: commercialInvoice.invoice_no,
       date: commercialInvoice.invoice_date,
-      exporter: commercialInvoice.exporter_name
+      exporter: commercialInvoice.exporter_name,
+      paymentTerms: commercialInvoice.payment_terms
     });
 
     // ============================================
@@ -606,6 +925,9 @@ export async function POST(request: NextRequest) {
       case 'exportdeclaration':
         validationResult = validateExportDeclarationWithCommercial(commercialInvoice, documentData);
         break;
+      case 'airwaybill':
+        validationResult = validateAirwayBillWithCommercial(commercialInvoice, documentData);
+        break;
       default:
         return NextResponse.json<ErrorResponse>(
           { error: 'Unsupported document type' },
@@ -620,7 +942,12 @@ export async function POST(request: NextRequest) {
       exporter_name: commercialInvoice.exporter_name,
       consignee_name: commercialInvoice.consignee_name,
       total_amount: commercialInvoice.total_amount,
-      currency: commercialInvoice.currency
+      currency: commercialInvoice.currency,
+      port_of_loading: commercialInvoice.port_of_loading,
+      port_of_discharge: commercialInvoice.port_of_discharge,
+      final_destination: commercialInvoice.final_destination,
+      payment_terms: commercialInvoice.payment_terms,
+      delivery_terms: commercialInvoice.delivery_terms
     };
 
     // ============================================
@@ -635,6 +962,13 @@ export async function POST(request: NextRequest) {
     console.log(`[Cross-Verify] Completeness: ${validationResult.completeness}%`);
     console.log(`[Cross-Verify] Errors: ${validationResult.validation_errors.length}`);
     console.log(`[Cross-Verify] Warnings: ${validationResult.validation_warnings.length}`);
+    
+    // Log specific details for export declaration
+    if (documentType === 'exportdeclaration') {
+      console.log(`[Cross-Verify] Payment Terms Verified: ${validationResult.crossDocumentMatches.paymentTermsVerified}`);
+      console.log(`[Cross-Verify] Date Logic Verified: ${validationResult.crossDocumentMatches.dateLogicVerified}`);
+    }
+    
     console.log('═══════════════════════════════════════');
 
     return NextResponse.json(validationResult);
@@ -670,7 +1004,7 @@ export async function GET(request: NextRequest) {
       endpoint: '/api/validate/cross-verify',
       body: {
         commercialInvoiceNumber: 'string (required)',
-        documentType: 'scomet | packinglist | fumigation | exportdeclaration (required)',
+        documentType: 'scomet | packinglist | fumigation | exportdeclaration | airwaybill (required)',
         documentData: 'object (required)',
         userId: 'string (required)',
         threadId: 'string (optional)'
@@ -680,7 +1014,18 @@ export async function GET(request: NextRequest) {
       'SCOMET Declaration',
       'Packing List', 
       'Fumigation Certificate',
-      'Export Declaration'
+      'Export Declaration',
+      'Airway Bill'
+    ],
+    exportDeclarationValidations: [
+      'Invoice Number (Critical)',
+      'Invoice Date (Critical)', 
+      'Payment Terms (Enhanced)',
+      'Shipping Bill Date Logic',
+      'Signed Date Logic',
+      'Exporter/Consignee Details',
+      'Port and Destination Information',
+      'HS Code and Amounts'
     ]
   });
 }

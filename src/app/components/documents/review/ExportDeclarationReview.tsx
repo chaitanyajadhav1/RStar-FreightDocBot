@@ -40,14 +40,16 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
   if (editExportDeclarationMode) {
     return (
       <div className="h-full flex">
-        {/* Left Section - Edit Form (compact when PDF is open) */}
+        {/* Left Section - Edit Form */}
         <div className={`${isPdfOpen ? 'w-1/2 pr-4' : 'w-full'} flex flex-col overflow-y-auto py-4 transition-all duration-300`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent mb-1">
                 Edit Export Declaration
               </h2>
-              <p className="text-base text-slate-600 dark:text-slate-400">Update the extracted export declaration data as needed</p>
+              <p className="text-base text-slate-600 dark:text-slate-400">
+                Update the extracted export declaration data as needed
+              </p>
             </div>
             <button
               onClick={() => onTogglePdf('exportdeclaration')}
@@ -64,30 +66,32 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
                 <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{currentExportDeclaration.filename}</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {currentExportDeclaration.filename}
+                </h3>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">
                   Editing Mode
                 </span>
               </div>
             </div>
 
-          {onDeleteDocument && (
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={onDeleteDocument}
-                disabled={exportDeclarationUpdating}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Document
-              </button>
-            </div>
-          )}
+            {onDeleteDocument && (
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={onDeleteDocument}
+                  disabled={exportDeclarationUpdating}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Document
+                </button>
+              </div>
+            )}
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== DOCUMENT INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Document Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -109,10 +113,10 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== CORE REFERENCE FIELDS ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Core Reference Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Hash className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -148,10 +152,10 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== VALUATION INFORMATION ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Valuation Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -169,7 +173,9 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-2.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Seller-Buyer Relationship</label>
+                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">
+                    Seller-Buyer Relationship
+                  </label>
                   <select
                     className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 dark:text-white"
                     value={currentExportDeclaration.sellerBuyerRelated === null ? 'null' : currentExportDeclaration.sellerBuyerRelated ? 'true' : 'false'}
@@ -185,7 +191,9 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-2.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Relationship Influenced Price</label>
+                  <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">
+                    Relationship Influenced Price
+                  </label>
                   <select
                     className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 dark:text-white"
                     value={currentExportDeclaration.relationshipInfluencedPrice === null ? 'null' : currentExportDeclaration.relationshipInfluencedPrice ? 'true' : 'false'}
@@ -206,10 +214,10 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== TRANSACTION DETAILS ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Transaction Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -237,10 +245,10 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               />
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-            {/* ===== DECLARATION DETAILS ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Declaration Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-2">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -269,7 +277,7 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               />
             </div>
 
-            {/* ===== ACTION BUTTONS ===== */}
+            {/* Action Buttons */}
             <div className="flex gap-3 justify-center mt-6">
               <button
                 onClick={() => onSetEditMode(false)}
@@ -285,7 +293,7 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               >
                 {exportDeclarationUpdating ? (
                   <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Saving...
                   </>
                 ) : (
@@ -382,28 +390,38 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{currentExportDeclaration.filename}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {currentExportDeclaration.filename}
+              </h3>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">
                 Export Declaration
               </span>
             </div>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Document Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Document Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Document Information
+              </h4>
             </div>
             <DataField label="Document Type" value={currentExportDeclaration.documentType} icon={FileText} />
             <DataField label="Declaration Number" value={currentExportDeclaration.declarationNumber} icon={Hash} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Core Reference Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Core Reference Fields</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Hash className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Core Reference Fields
+              </h4>
             </div>
             <DataField label="Invoice Number" value={currentExportDeclaration.invoiceNo} icon={Hash} />
             <DataField label="Invoice Date" value={currentExportDeclaration.invoiceDate} icon={Calendar} />
@@ -411,11 +429,15 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
             <DataField label="Shipping Bill Date" value={currentExportDeclaration.shippingBillDate} icon={Calendar} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Valuation Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Valuation Information</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Valuation Information
+              </h4>
             </div>
             <DataField label="Valuation Method" value={currentExportDeclaration.valuationMethod} icon={FileText} />
             <DataField 
@@ -431,22 +453,30 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
             <DataField label="Applicable Rule" value={currentExportDeclaration.applicableRule} icon={FileText} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Transaction Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Transaction Details</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Transaction Details
+              </h4>
             </div>
             <DataField label="Payment Terms" value={currentExportDeclaration.paymentTerms} icon={FileText} />
             <DataField label="Delivery Terms" value={currentExportDeclaration.deliveryTerms} icon={FileText} />
             <DataField label="Type of Sale" value={currentExportDeclaration.typeOfSale} icon={FileText} />
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+          <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Declaration Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="col-span-2">
-              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Declaration Details</h4>
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Declaration Details
+              </h4>
             </div>
             <DataField label="Declaration Status" value={currentExportDeclaration.declarationStatus} icon={CheckCircle} />
             <DataField label="Signed By" value={currentExportDeclaration.signedBy} icon={User} />
@@ -466,12 +496,14 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
           )}
         </div>
 
-        {(Array.isArray(currentExportDeclaration.validation_warnings) && currentExportDeclaration.validation_warnings.length > 0) && (
+        {Array.isArray(currentExportDeclaration.validation_warnings) && currentExportDeclaration.validation_warnings.length > 0 && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3 mb-4">
             <h4 className="font-semibold text-amber-900 dark:text-amber-300 mb-2 text-sm">Warnings</h4>
             <ul className="list-disc list-inside space-y-1 text-xs">
               {currentExportDeclaration.validation_warnings.map((warning, idx) => (
-                <li key={idx} className="text-amber-800 dark:text-amber-400">{warning}</li>
+                <li key={idx} className="text-amber-800 dark:text-amber-400">
+                  {warning}
+                </li>
               ))}
             </ul>
           </div>
@@ -487,13 +519,24 @@ export const ExportDeclarationReview: React.FC<ExportDeclarationReviewProps> = (
               Edit Data
             </button>
           )}
-          <button
-            onClick={onNextStep}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-sm"
-          >
-            Complete Process
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {onDeleteDocument && (
+            <button
+              onClick={onDeleteDocument}
+              disabled={exportDeclarationUpdating}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-rose-200 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors duration-200 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Document
+            </button>
+          )}
+         
+                       <button
+                      onClick={onNextStep}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-sm"
+                         >
+                      Continue to Next Document
+                      <ChevronRight className="w-4 h-4" />
+                      </button>
         </div>
       </div>
 
