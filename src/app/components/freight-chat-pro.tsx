@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Upload, X, Shield, Trash2, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Upload, X, Shield, Trash2, MessageSquare, Download } from 'lucide-react'
 
 // Hooks
 import { useAuth } from './hooks/useAuth'
@@ -64,6 +64,7 @@ export default function FreightChatPro() {
   const [uploadErrors, setUploadErrors] = useState<{[key: string]: string}>({})
   const [uploadRetryCount, setUploadRetryCount] = useState<{[key: string]: number}>({})
   const [showAdminNotice, setShowAdminNotice] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   // Hooks
   const auth = useAuth()
@@ -2383,6 +2384,51 @@ certificateId: documents.currentFumigationCertificate.fumigationCertificateId ||
     setDocumentsLoaded(false)
     fetchUserDocuments()
   }
+
+  // Export documents handler
+  const handleExportDocuments = async () => {
+    if (!auth.token || !auth.user) {
+      snackbar.showSnackbar("Please login first", "warning")
+      return
+    }
+
+    setExporting(true)
+    try {
+      const effectiveUserId = getEffectiveUserId()
+      const isAdminViewingOtherUser = adminMode && selectedUserId && selectedUserId !== auth.user.userId
+      const url = isAdminViewingOtherUser 
+        ? `${API_BASE}/export/user-documents?userId=${effectiveUserId}`
+        : `${API_BASE}/export/user-documents`
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${auth.token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Export failed')
+      }
+
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      a.download = `user_documents_${effectiveUserId}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(downloadUrl)
+
+      snackbar.showSnackbar("Documents exported successfully", "success")
+    } catch (error: any) {
+      console.error('Export error:', error)
+      snackbar.showSnackbar(error.message || "Export failed", "error")
+    } finally {
+      setExporting(false)
+    }
+  }
  
   // Render step content
   const renderStepContent = () => {
@@ -2728,10 +2774,21 @@ certificateId: documents.currentFumigationCertificate.fumigationCertificateId ||
                   Start Over
                 </button>
                 <button
-                  onClick={() => snackbar.showSnackbar("Export functionality would be implemented here", "info")}
-                  className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                  onClick={handleExportDocuments}
+                  disabled={exporting}
+                  className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Export Documents
+                  {exporting ? (
+                    <>
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      Export Documents
+                    </>
+                  )}
                 </button>
               </div>
             </div>
