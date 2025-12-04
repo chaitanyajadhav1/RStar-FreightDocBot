@@ -34,13 +34,17 @@ export default function RootLayout({
                   const darkMode = localStorage.getItem('darkMode');
                   if (darkMode === 'true') {
                     document.documentElement.classList.add('dark');
-                  } else if (darkMode === null) {
+                  } else if (darkMode === 'false') {
+                    document.documentElement.classList.remove('dark');
+                  } else {
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     if (prefersDark) {
                       document.documentElement.classList.add('dark');
                     }
                   }
-                } catch (e) {}
+                } catch (e) {
+                  console.error('Dark mode initialization error:', e);
+                }
               })();
             `,
           }}
@@ -48,7 +52,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning={true}
+        suppressHydrationWarning
       >
         {children}
       </body>

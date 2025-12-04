@@ -47,8 +47,13 @@ export const Header: React.FC<HeaderProps> = ({
             )}
             <div className="flex items-center gap-2 min-w-0">
               <div className="p-1.5 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex-shrink-0">
-                <Ship className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600 dark:text-teal-400" />
-              </div>
+<img 
+  src="/footer logo revised.svg" 
+  alt="Ship" 
+  className={`w-5 h-5 sm:w-6 sm:h-6 object-contain ${
+    darkMode ? '' : 'brightness-0 saturate-100'
+  }`}
+/></div>
               <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-teal-700 to-teal-500 bg-clip-text text-transparent truncate">
                 <span className="hidden sm:inline">RStar - FreightDocBot</span>
                 <span className="sm:hidden">RStar</span>
