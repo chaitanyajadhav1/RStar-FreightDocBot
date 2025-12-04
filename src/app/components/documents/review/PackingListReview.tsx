@@ -774,7 +774,7 @@ export const PackingListReview: React.FC<PackingListReviewProps> = ({
           )}
         </div>
 
-        {(Array.isArray(currentPackingList.validation_warnings) && currentPackingList.validation_warnings.length > 0) && (
+        {/* {(Array.isArray(currentPackingList.validation_warnings) && currentPackingList.validation_warnings.length > 0) && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3 mb-4">
             <h4 className="font-semibold text-amber-900 dark:text-amber-300 mb-2 text-sm">Warnings</h4>
             <ul className="list-disc list-inside space-y-1 text-xs">
@@ -783,7 +783,7 @@ export const PackingListReview: React.FC<PackingListReviewProps> = ({
               ))}
             </ul>
           </div>
-        )}
+        )} */}
 
         <div className="flex gap-3 justify-center">
           {canEdit && (
